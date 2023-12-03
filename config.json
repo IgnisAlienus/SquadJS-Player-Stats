@@ -3,6 +3,7 @@
     "enabled": true,
     "discordClient": "discord",
     "database": "mysql",
+    "daysBackToQuery": 30,
     "statsCommand": "mystats",
     "statCooldown": 15,
     "ingameRequireReserve": true,

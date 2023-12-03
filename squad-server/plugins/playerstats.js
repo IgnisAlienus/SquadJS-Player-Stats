@@ -38,6 +38,11 @@ export default class PlayerStats extends DiscordBasePlugin {
                 description: 'The Sequelize connector to log server information to.',
                 default: 'mysql'
             },
+            daysBackToQuery: {
+                required: false,
+                description: 'Days Back to Query for Stats',
+                default: 30
+            },
             statsCommand: {
                 required: false,
                 description: 'Command Players use in Chat to see their stats.',
@@ -312,7 +317,7 @@ export default class PlayerStats extends DiscordBasePlugin {
             }
         }
 
-        const thirtyDaysAgo = moment().subtract(30, 'days').toDate();
+        const daysAgo = moment().subtract(this.options.daysBackToQuery, 'days').toDate();
         const currentTime = Date.now();
         const lastExecutedTimes = this.lastStatCommandExecutionTimes || {}; // use an object to store last execution times for each steamID
         const cooldownTime = this.options.statCooldown;
@@ -334,7 +339,7 @@ export default class PlayerStats extends DiscordBasePlugin {
                 attacker: steamID,
                 time: {
                     [Op.and]: [
-                        { [Op.gte]: thirtyDaysAgo },
+                        { [Op.gte]: daysAgo },
                         { [Op.ne]: null }
                     ]
                 },
@@ -348,7 +353,7 @@ export default class PlayerStats extends DiscordBasePlugin {
                 attacker: steamID,
                 time: {
                     [Op.and]: [
-                        { [Op.gte]: thirtyDaysAgo },
+                        { [Op.gte]: daysAgo },
                         { [Op.ne]: null }
                     ]
                 },
@@ -362,7 +367,7 @@ export default class PlayerStats extends DiscordBasePlugin {
                 victim: steamID,
                 time: {
                     [Op.and]: [
-                        { [Op.gte]: thirtyDaysAgo },
+                        { [Op.gte]: daysAgo },
                         { [Op.ne]: null }
                     ]
                 },
@@ -376,7 +381,7 @@ export default class PlayerStats extends DiscordBasePlugin {
                 reviver: steamID,
                 time: {
                     [Op.and]: [
-                        { [Op.gte]: thirtyDaysAgo },
+                        { [Op.gte]: daysAgo },
                         { [Op.ne]: null }
                     ]
                 }
@@ -428,11 +433,11 @@ export default class PlayerStats extends DiscordBasePlugin {
     }
 
     async postDailyStats() {
-        const thirtyDaysAgo = moment().subtract(30, 'days').toDate();
+        const daysAgo = moment().subtract(this.options.daysBackToQuery, 'days').toDate();
         // Find player with the highest number of kills in the past 30 days
         const result = await this.models.Death.findOne({
             where: {
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 attacker: { [Op.not]: null },
                 teamkill: false
             },
@@ -448,7 +453,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         const killsCount = await this.models.Death.count({
             where: {
                 attacker,
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: false
             }
         });
@@ -456,7 +461,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         const { weapon } = await this.models.Wound.findOne({
             where: {
                 attacker,
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: false
             },
             attributes: ['weapon'],
@@ -468,7 +473,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         const woundsCount = await this.models.Wound.count({
             where: {
                 attacker,
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: false
             }
         });
@@ -476,7 +481,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         const deathsCount = await this.models.Death.count({
             where: {
                 victim: attacker,
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: { [Op.ne]: null }
             }
         });
@@ -484,7 +489,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         const teamkilledCount = await this.models.Death.count({
             where: {
                 victim: attacker,
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: true
             }
         });
@@ -492,7 +497,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         const revivesCount = await this.models.Revive.count({
             where: {
                 reviver: attacker,
-                time: { [Op.gte]: thirtyDaysAgo }
+                time: { [Op.gte]: daysAgo }
             }
         });
 
@@ -502,14 +507,14 @@ export default class PlayerStats extends DiscordBasePlugin {
         // Calculate Server Total Kills
         const serverKillsCount = await this.models.Death.count({
             where: {
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: false
             }
         });
         // Calculate Server Favorite Weapon
         const serverWeaponResult = await this.models.Wound.findOne({
             where: {
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: false
             },
             attributes: ['weapon'],
@@ -521,27 +526,27 @@ export default class PlayerStats extends DiscordBasePlugin {
         // Server Wounds
         const serverWoundsCount = await this.models.Wound.count({
             where: {
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: false
             }
         });
         // Server Deaths
         const serverDeathsCount = await this.models.Death.count({
             where: {
-                time: { [Op.gte]: thirtyDaysAgo },
+                time: { [Op.gte]: daysAgo },
                 teamkill: { [Op.ne]: null }
             }
         });
         // Server Revives
         const serverRevivesCount = await this.models.Revive.count({
             where: {
-                time: { [Op.gte]: thirtyDaysAgo }
+                time: { [Op.gte]: daysAgo }
             }
         });
 
         await this.sendDiscordMessage({
             embed: {
-                title: 'Squad Server Stats for the Last 30 Days',
+                title: `Squad Server Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
                 color: 16759808,
                 fields: [
                     {
