@@ -43,9 +43,24 @@ export default class PlayerStats extends DiscordBasePlugin {
                 description: 'Days Back to Query for Stats',
                 default: 30
             },
-            statsCommand: {
+            enableInGameStatsCommand: {
                 required: false,
-                description: 'Command Players use in Chat to see their stats.',
+                description: 'Enable In Game Stats Command',
+                default: true
+            },
+            inGameStatsCommand: {
+                required: false,
+                description: 'Command Players use in-game Chat to see their stats.',
+                default: "mystats"
+            },
+            enableInDiscordStatsCommand: {
+                required: false,
+                description: 'Enable In Discord Stats Command',
+                default: true
+            },
+            inDiscordStatsCommand: {
+                required: false,
+                description: 'Command Players use in Discord to see their stats.',
                 default: "mystats"
             },
             statCooldown: {
@@ -63,12 +78,17 @@ export default class PlayerStats extends DiscordBasePlugin {
                 description: 'ChannelID where Daily Stats are posted.',
                 default: '112233445566778899'
             },
+            enableDailyStats: {
+                required: false,
+                description: 'Enable Daily Stats',
+                default: true
+            },
             dailyStatsTime: {
                 required: false,
                 description: 'Time of day to manually send Daily Stats in UTC Time.',
                 default: "10:00"
             },
-            dailyStatsManualCmd: {
+            dailyStatsManualPostCmd: {
                 required: false,
                 description: 'Command to manually send the Daily Stats in Discord.',
                 default: "stats"
@@ -85,6 +105,44 @@ export default class PlayerStats extends DiscordBasePlugin {
         super(server, options, connectors);
 
         this.models = {};
+
+        this.createModel(
+            'Player',
+            {
+                id: {
+                    type: DataTypes.INTEGER,
+                    primaryKey: true,
+                    autoIncrement: true
+                },
+                eosID: {
+                    type: DataTypes.STRING,
+                    unique: true
+                },
+                steamID: {
+                    type: DataTypes.STRING,
+                    notNull: true,
+                    unique: true
+                },
+                lastName: {
+                    type: DataTypes.STRING
+                },
+                lastIP: {
+                    type: DataTypes.STRING
+                }
+            },
+            {
+                charset: 'utf8mb4',
+                collate: 'utf8mb4_unicode_ci',
+                indexes: [
+                    {
+                        fields: ['eosID']
+                    },
+                    {
+                        fields: ['steamID']
+                    }
+                ]
+            }
+        );
 
         this.createModel(
             'Wound',
@@ -262,12 +320,20 @@ export default class PlayerStats extends DiscordBasePlugin {
     }
 
     async mount() {
+        this.checkVersion();
+        this.models.Player.sync();
         this.models.Wound.sync();
         this.models.Death.sync();
         this.models.Revive.sync();
-        this.scheduleDailyStats();
-        this.options.discordClient.on('message', this.onManualCommand);
-        this.server.on(`CHAT_COMMAND:${this.options.statsCommand}`, this.onStatCommand);
+        if (this.options.enableDailyStats === true) {
+            this.scheduleDailyStats();
+        }
+        if (this.options.enableDailyStats === true || this.options.enableInDiscordStatsCommand === true) {
+            this.options.discordClient.on('message', this.onManualCommand);
+        }
+        if (this.options.enableInGameStatsCommand === true) {
+            this.server.on(`CHAT_COMMAND:${this.options.inGameStatsCommand}`, this.onStatCommand);
+        }
         this.verbose(1, 'PlayerStats Plugin was Mounted.');
         // Verify that the database connection was successful
         try {
@@ -284,34 +350,34 @@ export default class PlayerStats extends DiscordBasePlugin {
         this.verbose(1, 'PlayerStats Plugin was Unmounted.');
     }
 
-  // Check if current version is the latest version
-  async checkVersion() {
-    const owner = 'IgnisAlienus';
-    const repo = 'SquadJS-Player-Stats';
-    const currentVersion = 'v1.1.0';
+    // Check if current version is the latest version
+    async checkVersion() {
+        const owner = 'IgnisAlienus';
+        const repo = 'SquadJS-Player-Stats';
+        const currentVersion = 'v2.0.0';
 
-    try {
-      const latestVersion = await getLatestVersion(owner, repo);
+        try {
+            const latestVersion = await getLatestVersion(owner, repo);
 
-      if (currentVersion < latestVersion) {
-        this.verbose(1, 'A new version is available. Please update your plugin.');
-        this.sendDiscordMessage({
-          content: `A new version of \`SquadJS-Cheater-Detection\` is available. Please update your plugin.\nCurrent version: \`${currentVersion}\` [Latest version](https://github.com/IgnisAlienus/SquadJS-Player-Stats/releases): \`${latestVersion}\``
-        });
-      } else if (currentVersion > latestVersion) {
-        this.verbose(1, 'You are running a newer version than the latest version.');
-        this.sendDiscordMessage({
-          content: `You are running a newer version of \`SquadJS-Cheater-Detection\` than the latest version.\nThis likely means you are running a pre-release version.\nCurrent version: \`${currentVersion}\` [Latest version](https://github.com/IgnisAlienus/SquadJS-Player-Stats/releases): \`${latestVersion}\``
-        });
-      } else if (currentVersion === latestVersion){
-        this.verbose(1, 'You are running the latest version.');
-      } else {
-        this.verbose(1, 'Unable to check for updates.');
-      }
-    } catch (error) {
-      this.verbose(1, 'Error retrieving the latest version:', error);
+            if (currentVersion < latestVersion) {
+                this.verbose(1, 'A new version is available. Please update your plugin.');
+                this.sendDiscordMessage({
+                    content: `A new version of \`${repo}\` is available. Please update your plugin.\nCurrent version: \`${currentVersion}\` [Latest version](https://github.com/${owner}/${repo}/releases): \`${latestVersion}\``
+                });
+            } else if (currentVersion > latestVersion) {
+                this.verbose(1, 'You are running a newer version than the latest version.');
+                this.sendDiscordMessage({
+                    content: `You are running a newer version of \`${repo}\` than the latest version.\nThis likely means you are running a pre-release version.\nCurrent version: \`${currentVersion}\` [Latest version](https://github.com/${owner}/${repo}/releases): \`${latestVersion}\``
+                });
+            } else if (currentVersion === latestVersion) {
+                this.verbose(1, 'You are running the latest version.');
+            } else {
+                this.verbose(1, 'Unable to check for updates.');
+            }
+        } catch (error) {
+            this.verbose(1, 'Error retrieving the latest version:', error);
+        }
     }
-  }
 
     async onStatCommand(info) {
         const steamID = info.player.steamID;
@@ -415,15 +481,30 @@ export default class PlayerStats extends DiscordBasePlugin {
 
     async onManualCommand(message) {
         if (message.author.bot) return;
-        const regex = new RegExp("^!" + this.options.dailyStatsManualCmd + "$");
+        const manualCmdRegex = new RegExp("^!" + this.options.dailyStatsManualPostCmd + "$");
 
-        if (message.content.match(regex)) {
+        // Format is !this.options.inDiscordStatsCommand <steamID>
+        const mystatsCmdRegex = new RegExp("^!" + this.options.inDiscordStatsCommand + " (\\d{17})$");
+
+        if (message.content.match(manualCmdRegex) && this.options.enableDailyStats === true) {
             if (message.member._roles.includes(this.options.dailymanualCmdRole)) {
-                message.reply('You do not have permission to use this command.');
-                return;
+                return message.reply('You do not have permission to use this command.');
             }
-            this.postDailyStats();
+            await this.postDailyStats();
+            return;
+        } else if (message.content.match(manualCmdRegex) && this.options.enableDailyStats === false) {
+            return message.reply('Daily Stats are not enabled.');
         }
+
+        if (message.content.match(mystatsCmdRegex) && this.options.enableInDiscordStatsCommand === true) {
+            const steamID = message.content.match(mystatsCmdRegex)[1];
+            await this.postUserStats(steamID);
+            return;
+        } else if (message.content.match(mystatsCmdRegex) && this.options.enableInDiscordStatsCommand === false) {
+            return message.reply('In Discord Stats are not enabled.');
+        }
+
+        return message.reply('Invalid Command.');
     }
 
     async scheduleDailyStats() {
@@ -635,6 +716,171 @@ export default class PlayerStats extends DiscordBasePlugin {
             }
         });
     }
+
+    async postUserStats(steamID) {
+        const daysAgo = moment().subtract(this.options.daysBackToQuery, 'days').toDate();
+
+        // Get Player
+        const playerResult = await this.models.Player.findOne({
+            where: {
+                steamID: steamID
+            },
+            attributes: ['lastName']
+        });
+        const lastName = playerResult ? playerResult.lastName : null;
+
+        // Calculate total kills for the player
+        const killsCount = await this.models.Death.count({
+            where: {
+                attacker: steamID,
+                time: { [Op.gte]: daysAgo },
+                teamkill: false
+            }
+        });
+        // Calculate Favorite Weapon
+        const { weapon } = await this.models.Wound.findOne({
+            where: {
+                attacker: steamID,
+                time: { [Op.gte]: daysAgo },
+                teamkill: false
+            },
+            attributes: ['weapon'],
+            group: ['weapon'],
+            order: [[Sequelize.literal('COUNT(weapon)'), 'DESC']],
+            limit: 1
+        });
+        // Wounds
+        const woundsCount = await this.models.Wound.count({
+            where: {
+                attacker: steamID,
+                time: { [Op.gte]: daysAgo },
+                teamkill: false
+            }
+        });
+        // Deaths
+        const deathsCount = await this.models.Death.count({
+            where: {
+                victim: steamID,
+                time: { [Op.gte]: daysAgo },
+                teamkill: { [Op.ne]: null }
+            }
+        });
+        // Times Teamkilled
+        const teamkilledCount = await this.models.Death.count({
+            where: {
+                victim: steamID,
+                time: { [Op.gte]: daysAgo },
+                teamkill: true
+            }
+        });
+        // Revives
+        const revivesCount = await this.models.Revive.count({
+            where: {
+                reviver: steamID,
+                time: { [Op.gte]: daysAgo }
+            }
+        });
+
+        // Calculate K/D
+        const kdRatio = deathsCount !== 0 ? (killsCount / deathsCount).toFixed(2) : 0;
+
+        // Top Victim
+        const topVictimResult = await this.models.Death.findOne({
+            where: {
+                attacker: steamID,
+                time: { [Op.gte]: daysAgo },
+                teamkill: false,
+                victim: { [Op.not]: steamID }
+            },
+            attributes: ['victimName', [Sequelize.fn('COUNT', Sequelize.literal('victim')), 'Count']],
+            group: ['victimName'],
+            order: [[Sequelize.literal('Count'), 'DESC']],
+            limit: 1
+        });
+        const topVictim = topVictimResult ? topVictimResult.victimName : null;
+        const topVictimCount = topVictimResult ? topVictimResult.get('Count') : null;
+
+        // Top Nemesis
+        const topNemesisResult = await this.models.Death.findOne({
+            where: {
+                victim: steamID,
+                time: { [Op.gte]: daysAgo },
+                teamkill: false,
+                attacker: { [Op.not]: steamID }
+            },
+            attributes: ['attackerName', [Sequelize.fn('COUNT', Sequelize.literal('attacker')), 'Count']],
+            group: ['attackerName'],
+            order: [[Sequelize.literal('Count'), 'DESC']],
+            limit: 1
+        });
+        const topNemesis = topNemesisResult ? topNemesisResult.attackerName : null;
+        const topNemesisCount = topNemesisResult ? topNemesisResult.get('Count') : null;
+
+        await this.sendDiscordMessage({
+            embed: {
+                title: `Squad Server Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
+                color: 16759808,
+                fields: [
+                    {
+                        name: 'Found in Game Name',
+                        value: lastName,
+                        inline: false
+                    },
+                    {
+                        name: 'SteamID',
+                        value: steamID,
+                        inline: true
+                    },
+                    {
+                        name: 'Total Kills',
+                        value: killsCount.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'Total Wounds',
+                        value: woundsCount.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'Total Deaths',
+                        value: deathsCount.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'K/D Ratio',
+                        value: kdRatio,
+                        inline: true
+                    },
+                    {
+                        name: 'Times Teamkilled',
+                        value: teamkilledCount.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'Total Revives',
+                        value: revivesCount.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'Favorite Weapon',
+                        value: modifyString(weapon),
+                        inline: true
+                    },
+                    {
+                        name: 'Top Victim',
+                        value: `\`${lastName}\` has Killed \`${topVictim}\` \`${topVictimCount}\` Times!`,
+                        inline: true
+                    },
+                    {
+                        name: 'Top Nemesis',
+                        value: `\`${topNemesis}\` has Killed \`${lastName}\` \`${topNemesisCount}\` Times!`,
+                        inline: true
+                    },
+                ],
+                timestamp: new Date().toISOString()
+            }
+        });
+    }
 }
 
 // Retrieve the latest version from GitHub
@@ -643,4 +889,4 @@ async function getLatestVersion(owner, repo) {
     const response = await fetch(url);
     const data = await response.json();
     return data.tag_name;
-  }
+}

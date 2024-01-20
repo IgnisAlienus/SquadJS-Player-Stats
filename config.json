@@ -4,11 +4,15 @@
     "discordClient": "discord",
     "database": "mysql",
     "daysBackToQuery": 30,
-    "statsCommand": "mystats",
+    "enableInGameStatsCommand": true,
+    "inGameStatsCommand": "mystats",
+    "enableInDiscordStatsCommand": true,
+    "inDiscordStatsCommand": "mystats",
     "statCooldown": 15,
     "ingameRequireReserve": true,
     "channelID": "1076944412707397672",
+    "enableDailyStats": true,
     "dailyStatsTime": "15:00",
-    "dailyStatsManualCmd": "stats",
+    "dailyStatsManualPostCmd": "stats",
     "dailymanualCmdRole": 599226845589929984
   }
