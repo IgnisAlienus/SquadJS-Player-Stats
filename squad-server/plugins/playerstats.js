@@ -191,23 +191,6 @@ export default class PlayerStats extends DiscordBasePlugin {
         );
 
         this.createModel(
-            'SteamUser',
-            {
-                steamID: {
-                    type: DataTypes.STRING,
-                    primaryKey: true
-                },
-                lastName: {
-                    type: DataTypes.STRING
-                }
-            },
-            {
-                charset: 'utf8mb4',
-                collate: 'utf8mb4_unicode_ci'
-            }
-        );
-
-        this.createModel(
             'Revive',
             {
                 id: {
@@ -279,7 +262,6 @@ export default class PlayerStats extends DiscordBasePlugin {
     }
 
     async mount() {
-        this.models.SteamUser.sync();
         this.models.Wound.sync();
         this.models.Death.sync();
         this.models.Revive.sync();
@@ -301,6 +283,35 @@ export default class PlayerStats extends DiscordBasePlugin {
         this.server.removeEventListener(`CHAT_COMMAND:${this.options.statsCommand}`, this.onStatCommand);
         this.verbose(1, 'PlayerStats Plugin was Unmounted.');
     }
+
+  // Check if current version is the latest version
+  async checkVersion() {
+    const owner = 'IgnisAlienus';
+    const repo = 'SquadJS-Player-Stats';
+    const currentVersion = 'v1.1.0';
+
+    try {
+      const latestVersion = await getLatestVersion(owner, repo);
+
+      if (currentVersion < latestVersion) {
+        this.verbose(1, 'A new version is available. Please update your plugin.');
+        this.sendDiscordMessage({
+          content: `A new version of \`SquadJS-Cheater-Detection\` is available. Please update your plugin.\nCurrent version: \`${currentVersion}\` [Latest version](https://github.com/IgnisAlienus/SquadJS-Player-Stats/releases): \`${latestVersion}\``
+        });
+      } else if (currentVersion > latestVersion) {
+        this.verbose(1, 'You are running a newer version than the latest version.');
+        this.sendDiscordMessage({
+          content: `You are running a newer version of \`SquadJS-Cheater-Detection\` than the latest version.\nThis likely means you are running a pre-release version.\nCurrent version: \`${currentVersion}\` [Latest version](https://github.com/IgnisAlienus/SquadJS-Player-Stats/releases): \`${latestVersion}\``
+        });
+      } else if (currentVersion === latestVersion){
+        this.verbose(1, 'You are running the latest version.');
+      } else {
+        this.verbose(1, 'Unable to check for updates.');
+      }
+    } catch (error) {
+      this.verbose(1, 'Error retrieving the latest version:', error);
+    }
+  }
 
     async onStatCommand(info) {
         const steamID = info.player.steamID;
@@ -625,3 +636,11 @@ export default class PlayerStats extends DiscordBasePlugin {
         });
     }
 }
+
+// Retrieve the latest version from GitHub
+async function getLatestVersion(owner, repo) {
+    const url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.tag_name;
+  }
