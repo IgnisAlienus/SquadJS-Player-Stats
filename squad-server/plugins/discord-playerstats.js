@@ -20,7 +20,7 @@ function modifyString(string) {
 export default class DiscordPlayerStats extends DiscordBasePlugin {
     static get description() {
         return (
-            'The <code>PlayerStats</code> plugin allows players to view their Stats ingame.' +
+            'The <code>DiscordPlayerStats</code> plugin allows players to view their Stats ingame.' +
             'This requires DBLog to be turned on!'
         );
     }
@@ -32,6 +32,11 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
     static get optionsSpecification() {
         return {
             ...DiscordBasePlugin.optionsSpecification,
+            channelID: {
+                required: false,
+                description: 'ChannelID where Daily Stats are posted.',
+                default: '112233445566778899'
+            },
             database: {
                 required: true,
                 connector: 'sequelize',
@@ -58,10 +63,30 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 description: 'Enable In Discord Stats Command',
                 default: true
             },
+            linkDiscordAccountCommand: {
+                required: false,
+                description: 'Command Players use in Discord to link their Discord Account.',
+                default: "link"
+            },
+            linkDiscordEmbedColor: {
+                required: false,
+                description: 'Color of the Embed when linking Discord Account.',
+                default: 16759808
+            },
+            linkInGameAccountCommand: {
+                required: false,
+                description: 'Command Players use in-game Chat to link their In Game Account.',
+                default: "link"
+            },
             inDiscordStatsCommand: {
                 required: false,
                 description: 'Command Players use in Discord to see their stats.',
                 default: "mystats"
+            },
+            inDiscordStatsEmbedColor: {
+                required: false,
+                description: 'Color of the Embed when viewing Stats in Discord.',
+                default: 16759808
             },
             statCooldown: {
                 required: false,
@@ -72,11 +97,6 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 required: false,
                 description: 'Require Reserve to Use in Game command',
                 default: true
-            },
-            channelID: {
-                required: false,
-                description: 'ChannelID where Daily Stats are posted.',
-                default: '112233445566778899'
             },
             enableDailyStats: {
                 required: false,
@@ -92,6 +112,11 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 required: false,
                 description: 'Command to manually send the Daily Stats in Discord.',
                 default: "stats"
+            },
+            dailyStatsEmbedColor: {
+                required: false,
+                description: 'Color of the Embed when posting Daily Stats.',
+                default: 16759808
             },
             dailymanualCmdRole: {
                 required: false,
@@ -143,6 +168,28 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 ]
             }
         );
+
+        this.createModel(
+            'LinkCode',
+            {
+              id: {
+                type: DataTypes.STRING,
+                primaryKey: true
+              },
+              linkCode: {
+                type: DataTypes.STRING,
+                allowNull: false
+              },
+              discordID: {
+                type: DataTypes.STRING,
+                allowNull: false
+              }
+            },
+            {
+              charset: 'utf8mb4',
+              collate: 'utf8mb4_unicode_ci'
+            }
+          );
 
         this.createModel(
             'Wound',
@@ -310,6 +357,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         );
 
         this.onStatCommand = this.onStatCommand.bind(this)
+        this.onLinkCommand = this.onLinkCommand.bind(this);
         this.onMessage = this.onMessage.bind(this);
     }
 
@@ -322,6 +370,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
     async mount() {
         this.checkVersion();
         this.models.Player.sync();
+        this.models.LinkCode.sync();
         this.models.Wound.sync();
         this.models.Death.sync();
         this.models.Revive.sync();
@@ -333,6 +382,9 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         }
         if (this.options.enableInGameStatsCommand === true) {
             this.server.on(`CHAT_COMMAND:${this.options.inGameStatsCommand}`, this.onStatCommand);
+        }
+        if (this.options.enableInDiscordStatsCommand === true) {
+            this.server.on(`CHAT_COMMAND:${this.options.linkInGameAccountCommand}`, this.onLinkCommand);
         }
         this.verbose(1, 'PlayerStats Plugin was Mounted.');
         // Verify that the database connection was successful
@@ -347,6 +399,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
     async unmount() {
         this.options.discordClient.removeEventListener('message', this.onMessage);
         this.server.removeEventListener(`CHAT_COMMAND:${this.options.statsCommand}`, this.onStatCommand);
+        this.server.removeEventListener(`CHAT_COMMAND:${this.options.linkInGameAccountCommand}`, this.onLinkCommand);
         this.verbose(1, 'PlayerStats Plugin was Unmounted.');
     }
 
@@ -354,7 +407,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
     async checkVersion() {
         const owner = 'IgnisAlienus';
         const repo = 'SquadJS-Player-Stats';
-        const currentVersion = 'v2.1.0';
+        const currentVersion = 'v3.0.0';
 
         try {
             const latestVersion = await getLatestVersion(owner, repo);
@@ -479,12 +532,73 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         this.lastStatCommandExecutionTimes = lastExecutedTimes; // store the last execution times object
     }
 
+    async onLinkCommand(info) {
+        const steamID = info.player.steamID;
+
+        // Check if message is empty
+        if (info.message.length === 0) {
+            await this.server.rcon.warn(
+                steamID,
+                `Please input your linking code given in our Discord using !${this.options.linkInGameAccountCommand}.`
+            );
+            return;
+        }
+
+        // Check if message is not the right length
+        if (info.message.length !== 6) {
+            await this.server.rcon.warn(
+                steamID,
+                `Please input a valid 6-digit linking code.\nUse !${this.options.linkDiscordAccountCommand} in Discord to get your linking code.`
+            );
+            return;
+        }
+
+        // Find Matching Link Code in DB
+        const linkCode = await this.models.LinkCode.findOne({
+            where: {
+                linkCode: info.message
+            }
+        });
+
+        // Add Discord ID to Player Table
+        if (linkCode) {
+            await this.models.Player.update(
+                {
+                    discordID: linkCode.discordID
+                },
+                {
+                    where: {
+                        steamID: steamID
+                    }
+                }
+            );
+            await this.server.rcon.warn(
+                steamID,
+                `Your Discord Account has been linked to your In Game Account.\nYou can now use !mystats in-game to view your stats.`
+            );
+            // Delete Link Code from DB
+            await this.models.LinkCode.destroy({
+                where: {
+                    linkCode: info.message
+                }
+            });
+        } else {
+            await this.server.rcon.warn(
+                steamID,
+                `Please input a valid 6-digit linking code.\nUse !${this.options.linkDiscordAccountCommand} in Discord to get your linking code.`
+            );
+            return;
+        }
+    }
+
     async onMessage(message) {
         if (message.author.bot) return;
         const manualCmdRegex = new RegExp("^!" + this.options.dailyStatsManualPostCmd + "$");
 
         // Format is !this.options.inDiscordStatsCommand <steamID>
-        const mystatsCmdRegex = new RegExp("^!" + this.options.inDiscordStatsCommand + " (\\d{17})$");
+        const mystatsCmdRegex = new RegExp("^!" + this.options.inDiscordStatsCommand);
+
+        const linkCmdRegex = new RegExp("^!" + this.options.linkDiscordAccountCommand);
 
         if (message.content.match(manualCmdRegex) && this.options.enableDailyStats === true) {
             if (message.member._roles.includes(this.options.dailymanualCmdRole)) {
@@ -497,13 +611,42 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         }
 
         if (message.content.match(mystatsCmdRegex) && this.options.enableInDiscordStatsCommand === true) {
-            const steamID = message.content.match(mystatsCmdRegex)[1];
+            // Find Player in DB
+            const playerResult = await this.models.Player.findOne({
+                where: {
+                    discordID: message.author.id
+                },
+                attributes: ['steamID']
+            });
+            const steamID = playerResult ? playerResult.steamID : null;
+            if (!steamID) {
+                return message.reply(`Your Discord Account is not linked to an In Game Account.\nUse !${this.options.linkDiscordAccountCommand} in Discord begin linking your account.`);
+            }
             await this.postUserStats(steamID);
             return;
         } else if (message.content.match(mystatsCmdRegex) && this.options.enableInDiscordStatsCommand === false) {
             return message.reply('In Discord Stats are not enabled.');
         }
-        return; 
+
+        if (message.content.match(linkCmdRegex) && this.options.enableInDiscordStatsCommand === true) {
+            // Generate a random 6-digit code
+            const linkCode = Math.floor(100000 + Math.random() * 900000);
+            // Add Link Code to Database
+            await this.models.LinkCode.create({
+                linkCode: linkCode,
+                discordID: message.author.id
+            });  
+            // Send Message to Discord User's DM
+             await message.author.send({
+                 embed: {
+                     title: `Your linking code is: \`${linkCode}\``,
+                     description: `Please use \`!${this.options.linkInGameAccountCommand} ${linkCode}\` in-game to link your account.`,
+                     color: this.options.linkDiscordEmbedColor,
+                     timestamp: new Date().toISOString()
+                 }
+            });
+        }
+        return;
     }
 
     async scheduleDailyStats() {
@@ -638,7 +781,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         await this.sendDiscordMessage({
             embed: {
                 title: `Squad Server Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
-                color: 16759808,
+                color: this.options.dailyStatsEmbedColor,
                 fields: [
                     {
                         name: 'Top Player',
@@ -818,7 +961,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         await this.sendDiscordMessage({
             embed: {
                 title: `Squad Server Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
-                color: 16759808,
+                color: this.options.inDiscordStatsEmbedColor,
                 fields: [
                     {
                         name: 'Found in Game Name',
