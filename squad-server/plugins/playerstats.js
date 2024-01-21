@@ -354,7 +354,7 @@ export default class PlayerStats extends DiscordBasePlugin {
     async checkVersion() {
         const owner = 'IgnisAlienus';
         const repo = 'SquadJS-Player-Stats';
-        const currentVersion = 'v2.0.0';
+        const currentVersion = 'v2.0.1';
 
         try {
             const latestVersion = await getLatestVersion(owner, repo);
@@ -503,8 +503,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         } else if (message.content.match(mystatsCmdRegex) && this.options.enableInDiscordStatsCommand === false) {
             return message.reply('In Discord Stats are not enabled.');
         }
-
-        return message.reply('Invalid Command.');
+        return; 
     }
 
     async scheduleDailyStats() {
