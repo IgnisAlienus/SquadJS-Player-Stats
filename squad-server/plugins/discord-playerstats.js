@@ -174,7 +174,8 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             {
               id: {
                 type: DataTypes.STRING,
-                primaryKey: true
+                primaryKey: true,
+                autoIncrement: true
               },
               linkCode: {
                 type: DataTypes.STRING,
