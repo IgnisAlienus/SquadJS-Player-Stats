@@ -21,3 +21,12 @@
 - `dailyStatsTime` sets the time of day that the daily stats will be sent. Use 24 Hour time.
 - `dailyStatsManualPostCmd` sets the manual command to force the daily stats embed. Must have a leading `!` when used by someone with the `dailymanualCmdRole` in Discord. DO NOT Configure `config.json` with a leading `!`.
 - `dailymanualCmdRole` sets the role required to force the daily stats embed.
+
+## Example Player Discord Posting
+![Example](https://raw.githubusercontent.com/IgnisAlienus/SquadJS-Player-Stats/master/example-player-discord.png)
+
+## Example Daily Discord Posting
+![Example](https://raw.githubusercontent.com/IgnisAlienus/SquadJS-Player-Stats/master/example-daily-discord.png)
+
+## Example In Game Stats
+![Example](https://raw.githubusercontent.com/IgnisAlienus/SquadJS-Player-Stats/master/example-ingame.png)
