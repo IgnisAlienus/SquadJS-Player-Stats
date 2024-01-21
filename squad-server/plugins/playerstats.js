@@ -17,7 +17,7 @@ function modifyString(string) {
     return string;
 }
 
-export default class PlayerStats extends DiscordBasePlugin {
+export default class DiscordPlayerStats extends DiscordBasePlugin {
     static get description() {
         return (
             'The <code>PlayerStats</code> plugin allows players to view their Stats ingame.' +
@@ -310,7 +310,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         );
 
         this.onStatCommand = this.onStatCommand.bind(this)
-        this.onManualCommand = this.onManualCommand.bind(this);
+        this.onMessage = this.onMessage.bind(this);
     }
 
     createModel(name, schema) {
@@ -329,7 +329,7 @@ export default class PlayerStats extends DiscordBasePlugin {
             this.scheduleDailyStats();
         }
         if (this.options.enableDailyStats === true || this.options.enableInDiscordStatsCommand === true) {
-            this.options.discordClient.on('message', this.onManualCommand);
+            this.options.discordClient.on('message', this.onMessage);
         }
         if (this.options.enableInGameStatsCommand === true) {
             this.server.on(`CHAT_COMMAND:${this.options.inGameStatsCommand}`, this.onStatCommand);
@@ -345,7 +345,7 @@ export default class PlayerStats extends DiscordBasePlugin {
     }
 
     async unmount() {
-        this.options.discordClient.removeEventListener('message', this.onManualCommand);
+        this.options.discordClient.removeEventListener('message', this.onMessage);
         this.server.removeEventListener(`CHAT_COMMAND:${this.options.statsCommand}`, this.onStatCommand);
         this.verbose(1, 'PlayerStats Plugin was Unmounted.');
     }
@@ -354,7 +354,7 @@ export default class PlayerStats extends DiscordBasePlugin {
     async checkVersion() {
         const owner = 'IgnisAlienus';
         const repo = 'SquadJS-Player-Stats';
-        const currentVersion = 'v2.0.1';
+        const currentVersion = 'v2.1.0';
 
         try {
             const latestVersion = await getLatestVersion(owner, repo);
@@ -479,7 +479,7 @@ export default class PlayerStats extends DiscordBasePlugin {
         this.lastStatCommandExecutionTimes = lastExecutedTimes; // store the last execution times object
     }
 
-    async onManualCommand(message) {
+    async onMessage(message) {
         if (message.author.bot) return;
         const manualCmdRegex = new RegExp("^!" + this.options.dailyStatsManualPostCmd + "$");
 
