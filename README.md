@@ -6,6 +6,12 @@
 - Allow Player to link their in-game and Discord Accounts so that they can:
     - Check Stats in Discord with a configuralbe Cooldown.
 
+## How do the Players use this?
+- In-game, players use `!mystats` to view Stats in Game. (or your configured command - don't put an `!` in the config.json)
+- In Discord, players use `!link` to get a linking code that is used in game. (or your configured command - don't put an `!` in the config.json).
+    - In-game, players use `!link [code]` to link thier in-game to their Discord. (or your configured command - don't put an `!` in the config.json).
+- In Discord, once linked, players can use `!mystats` to view thier stats in Discord. (or your configured command - don't put an `!` in the config.json).
+
 ## Requirements
 - DBLog Plugin needs to be ENABLED
 - You need to have your Reserve List Configured in `adminLists` if you wish to require in game players to be a Reserve to use the in game Command.
