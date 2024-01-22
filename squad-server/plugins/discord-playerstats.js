@@ -636,7 +636,9 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             await this.models.LinkCode.create({
                 linkCode: linkCode,
                 discordID: message.author.id
-            });  
+            });
+            // Tell User to Make sure they can receive DMs from the Bot
+            await message.reply(`Please check your DMs for your linking code.\nMake sure you can receive DMs from this Bot.`);
             // Send Message to Discord User's DM
              await message.author.send({
                  embed: {
