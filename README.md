@@ -38,6 +38,14 @@
 ## Further Instructions/Notes for Installing
 - You are welcome to use the provided `a-complete-db-log.js` file contents for your `db-log.js` plugin. Just note, that I may not have this file updated as fast if the Main SquadJS updates their version of `db-log.js`.
 - Therefore, I have provided the individual bits you need to paste in the `add-to-db-log.js` file.
+- You may need to manually update the Database Tables to make sure they get the new Table and Columns:
+```ALTER TABLE dblog_players
+ADD COLUMN discordID VARCHAR(255);```
+```CREATE TABLE <database name here>.dblog_linkcodes (
+    id INT(11) PRIMARY KEY AUTO_INCREMENT,
+    linkCode VARCHAR(255) NOT NULL,
+    discordID VARCHAR(255) NOT NULL
+);```
 - Please contact me if there is any confusion.
 
 ## Example Player Discord Posting
