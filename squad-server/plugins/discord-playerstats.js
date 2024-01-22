@@ -153,6 +153,11 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 },
                 lastIP: {
                     type: DataTypes.STRING
+                },
+                discordID: {
+                    type: DataTypes.STRING,
+                    allowNull: true,
+                    defaultValue: null
                 }
             },
             {
