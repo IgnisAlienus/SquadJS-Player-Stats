@@ -559,45 +559,49 @@ export default class DBLog extends BasePlugin {
     }
 
     async onPlayerWounded(info) {
-        if (info.attacker)
-            await this.models.Player.upsert(
-                {
-                    eosID: info.attacker.eosID,
-                    steamID: info.attacker.steamID,
-                    lastName: info.attacker.name
-                },
-                {
-                    conflictFields: ['steamID']
-                }
-            );
-        if (info.victim)
-            await this.models.Player.upsert(
-                {
-                    eosID: info.victim.eosID,
-                    steamID: info.victim.steamID,
-                    lastName: info.victim.name
-                },
-                {
-                    conflictFields: ['steamID']
-                }
-            );
+        try {
+            if (info.attacker)
+                await this.models.Player.upsert(
+                    {
+                        eosID: info.attacker.eosID,
+                        steamID: info.attacker.steamID,
+                        lastName: info.attacker.name
+                    },
+                    {
+                        conflictFields: ['steamID']
+                    }
+                );
+            if (info.victim)
+                await this.models.Player.upsert(
+                    {
+                        eosID: info.victim.eosID,
+                        steamID: info.victim.steamID,
+                        lastName: info.victim.name
+                    },
+                    {
+                        conflictFields: ['steamID']
+                    }
+                );
 
-        await this.models.Wound.create({
-            server: this.options.overrideServerID || this.server.id,
-            match: this.match ? this.match.id : null,
-            time: info.time,
-            victim: info.victim ? info.victim.steamID : null,
-            victimName: info.victim ? info.victim.name : null,
-            victimTeamID: info.victim ? info.victim.teamID : null,
-            victimSquadID: info.victim ? info.victim.squadID : null,
-            attacker: info.attacker ? info.attacker.steamID : null,
-            attackerName: info.attacker ? info.attacker.name : null,
-            attackerTeamID: info.attacker ? info.attacker.teamID : null,
-            attackerSquadID: info.attacker ? info.attacker.squadID : null,
-            damage: info.damage,
-            weapon: info.weapon,
-            teamkill: info.teamkill
-        });
+            await this.models.Wound.create({
+                server: this.options.overrideServerID || this.server.id,
+                match: this.match ? this.match.id : null,
+                time: info.time,
+                victim: info.victim ? info.victim.steamID : null,
+                victimName: info.victim ? info.victim.name : null,
+                victimTeamID: info.victim ? info.victim.teamID : null,
+                victimSquadID: info.victim ? info.victim.squadID : null,
+                attacker: info.attacker ? info.attacker.steamID : null,
+                attackerName: info.attacker ? info.attacker.name : null,
+                attackerTeamID: info.attacker ? info.attacker.teamID : null,
+                attackerSquadID: info.attacker ? info.attacker.squadID : null,
+                damage: info.damage,
+                weapon: info.weapon,
+                teamkill: info.teamkill
+            });
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     async onPlayerDied(info) {
