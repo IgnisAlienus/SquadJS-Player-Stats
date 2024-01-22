@@ -177,25 +177,25 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         this.createModel(
             'LinkCode',
             {
-              id: {
-                type: DataTypes.STRING,
-                primaryKey: true,
-                autoIncrement: true
-              },
-              linkCode: {
-                type: DataTypes.STRING,
-                allowNull: false
-              },
-              discordID: {
-                type: DataTypes.STRING,
-                allowNull: false
-              }
+                id: {
+                    type: DataTypes.STRING,
+                    primaryKey: true,
+                    autoIncrement: true
+                },
+                linkCode: {
+                    type: DataTypes.STRING,
+                    allowNull: false
+                },
+                discordID: {
+                    type: DataTypes.STRING,
+                    allowNull: false
+                }
             },
             {
-              charset: 'utf8mb4',
-              collate: 'utf8mb4_unicode_ci'
+                charset: 'utf8mb4',
+                collate: 'utf8mb4_unicode_ci'
             }
-          );
+        );
 
         this.createModel(
             'Wound',
@@ -645,13 +645,13 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             // Tell User to Make sure they can receive DMs from the Bot
             await message.reply(`Please check your DMs for your linking code.\nMake sure you can receive DMs from this Bot.`);
             // Send Message to Discord User's DM
-             await message.author.send({
-                 embed: {
-                     title: `Your linking code is: \`${linkCode}\``,
-                     description: `Please use \`!${this.options.linkInGameAccountCommand} ${linkCode}\` in-game to link your account.`,
-                     color: this.options.linkDiscordEmbedColor,
-                     timestamp: new Date().toISOString()
-                 }
+            await message.author.send({
+                embed: {
+                    title: `Your linking code is: \`${linkCode}\``,
+                    description: `Please use \`!${this.options.linkInGameAccountCommand} ${linkCode}\` in-game to link your account.`,
+                    color: this.options.linkDiscordEmbedColor,
+                    timestamp: new Date().toISOString()
+                }
             });
         }
         return;
@@ -700,9 +700,9 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             }
         });
         // Calculate Favorite Weapon
-        const { weapon } = await this.models.Wound.findOne({
+        const weaponResult = await this.models.Wound.findOne({
             where: {
-                attacker,
+                attacker: steamID,
                 time: { [Op.gte]: daysAgo },
                 teamkill: false
             },
@@ -888,7 +888,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             }
         });
         // Calculate Favorite Weapon
-        const { weapon } = await this.models.Wound.findOne({
+        const weaponResult = await this.models.Wound.findOne({
             where: {
                 attacker: steamID,
                 time: { [Op.gte]: daysAgo },
@@ -899,6 +899,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             order: [[Sequelize.literal('COUNT(weapon)'), 'DESC']],
             limit: 1
         });
+        const weapon = weaponResult ? weaponResult.weapon : null;
         // Wounds
         const woundsCount = await this.models.Wound.count({
             where: {
