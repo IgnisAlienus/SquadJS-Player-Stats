@@ -48,7 +48,7 @@ export default class DBLog extends BasePlugin {
             'LinkCode',
             {
                 id: {
-                    type: DataTypes.STRING,
+                    type: DataTypes.INTEGER,
                     primaryKey: true,
                     autoIncrement: true
                 },
