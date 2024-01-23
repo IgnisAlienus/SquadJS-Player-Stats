@@ -901,8 +901,6 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             limit: 1
         });
         const weapon = weaponResult ? weaponResult.weapon : null;
-        this.verbose(1, weapon);
-        this.verbose(1, steamID);
         // Wounds
         const woundsCount = await this.models.Wound.count({
             where: {

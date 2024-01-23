@@ -523,224 +523,196 @@ export default class DBLog extends BasePlugin {
     }
 
     async onTickRate(info) {
-        try {
-            await this.models.TickRate.create({
-                server: this.options.overrideServerID || this.server.id,
-                match: this.match ? this.match.id : null,
-                time: info.time,
-                tickRate: info.tickRate
-            });
-        } catch (error) {
-            console.log(error);
-        }
+        await this.models.TickRate.create({
+            server: this.options.overrideServerID || this.server.id,
+            match: this.match ? this.match.id : null,
+            time: info.time,
+            tickRate: info.tickRate
+        });
     }
 
     async onUpdatedA2SInformation(info) {
-        try {
-            await this.models.PlayerCount.create({
-                server: this.options.overrideServerID || this.server.id,
-                match: this.match ? this.match.id : null,
-                players: info.a2sPlayerCount,
-                publicQueue: info.publicQueue,
-                reserveQueue: info.reserveQueue
-            });
-        } catch (error) {
-            console.log(error);
-        }
+        await this.models.PlayerCount.create({
+            server: this.options.overrideServerID || this.server.id,
+            match: this.match ? this.match.id : null,
+            players: info.a2sPlayerCount,
+            publicQueue: info.publicQueue,
+            reserveQueue: info.reserveQueue
+        });
     }
 
     async onNewGame(info) {
-        try {
-            await this.models.Match.update(
-                { endTime: info.time, winner: info.winner },
-                { where: { server: this.options.overrideServerID || this.server.id, endTime: null } }
-            );
+        await this.models.Match.update(
+            { endTime: info.time, winner: info.winner },
+            { where: { server: this.options.overrideServerID || this.server.id, endTime: null } }
+        );
 
-            this.match = await this.models.Match.create({
-                server: this.options.overrideServerID || this.server.id,
-                dlc: info.dlc,
-                mapClassname: info.mapClassname,
-                layerClassname: info.layerClassname,
-                map: info.layer ? info.layer.map.name : null,
-                layer: info.layer ? info.layer.name : null,
-                startTime: info.time
-            });
-        } catch (error) {
-            console.log(error);
-        }
+        this.match = await this.models.Match.create({
+            server: this.options.overrideServerID || this.server.id,
+            dlc: info.dlc,
+            mapClassname: info.mapClassname,
+            layerClassname: info.layerClassname,
+            map: info.layer ? info.layer.map.name : null,
+            layer: info.layer ? info.layer.name : null,
+            startTime: info.time
+        });
     }
 
     async onPlayerWounded(info) {
-        try {
-            if (info.attacker)
-                await this.models.Player.upsert(
-                    {
-                        eosID: info.attacker.eosID,
-                        steamID: info.attacker.steamID,
-                        lastName: info.attacker.name
-                    },
-                    {
-                        conflictFields: ['steamID']
-                    }
-                );
-            if (info.victim)
-                await this.models.Player.upsert(
-                    {
-                        eosID: info.victim.eosID,
-                        steamID: info.victim.steamID,
-                        lastName: info.victim.name
-                    },
-                    {
-                        conflictFields: ['steamID']
-                    }
-                );
-
-            await this.models.Wound.create({
-                server: this.options.overrideServerID || this.server.id,
-                match: this.match ? this.match.id : null,
-                time: info.time,
-                victim: info.victim ? info.victim.steamID : null,
-                victimName: info.victim ? info.victim.name : null,
-                victimTeamID: info.victim ? info.victim.teamID : null,
-                victimSquadID: info.victim ? info.victim.squadID : null,
-                attacker: info.attacker ? info.attacker.steamID : null,
-                attackerName: info.attacker ? info.attacker.name : null,
-                attackerTeamID: info.attacker ? info.attacker.teamID : null,
-                attackerSquadID: info.attacker ? info.attacker.squadID : null,
-                damage: info.damage,
-                weapon: info.weapon,
-                teamkill: info.teamkill
-            });
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    async onPlayerDied(info) {
-        try {
-            if (info.attacker)
-                await this.models.Player.upsert(
-                    {
-                        eosID: info.attacker.eosID,
-                        steamID: info.attacker.steamID,
-                        lastName: info.attacker.name
-                    },
-                    {
-                        conflictFields: ['steamID']
-                    }
-                );
-            if (info.victim)
-                await this.models.Player.upsert(
-                    {
-                        eosID: info.victim.eosID,
-                        steamID: info.victim.steamID,
-                        lastName: info.victim.name
-                    },
-                    {
-                        conflictFields: ['steamID']
-                    }
-                );
-
-            await this.models.Death.create({
-                server: this.options.overrideServerID || this.server.id,
-                match: this.match ? this.match.id : null,
-                time: info.time,
-                woundTime: info.woundTime,
-                victim: info.victim ? info.victim.steamID : null,
-                victimName: info.victim ? info.victim.name : null,
-                victimTeamID: info.victim ? info.victim.teamID : null,
-                victimSquadID: info.victim ? info.victim.squadID : null,
-                attacker: info.attacker ? info.attacker.steamID : null,
-                attackerName: info.attacker ? info.attacker.name : null,
-                attackerTeamID: info.attacker ? info.attacker.teamID : null,
-                attackerSquadID: info.attacker ? info.attacker.squadID : null,
-                damage: info.damage,
-                weapon: info.weapon,
-                teamkill: info.teamkill
-            });
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    async onPlayerRevived(info) {
-        try {
-            if (info.attacker)
-                await this.models.Player.upsert(
-                    {
-                        eosID: info.attacker.eosID,
-                        steamID: info.attacker.steamID,
-                        lastName: info.attacker.name
-                    },
-                    {
-                        conflictFields: ['steamID']
-                    }
-                );
-            if (info.victim)
-                await this.models.Player.upsert(
-                    {
-                        eosID: info.victim.eosID,
-                        steamID: info.victim.steamID,
-                        lastName: info.victim.name
-                    },
-                    {
-                        conflictFields: ['steamID']
-                    }
-                );
-            if (info.reviver)
-                await this.models.Player.upsert(
-                    {
-                        eosID: info.reviver.eosID,
-                        steamID: info.reviver.steamID,
-                        lastName: info.reviver.name
-                    },
-                    {
-                        conflictFields: ['steamID']
-                    }
-                );
-
-            await this.models.Revive.create({
-                server: this.options.overrideServerID || this.server.id,
-                match: this.match ? this.match.id : null,
-                time: info.time,
-                woundTime: info.woundTime,
-                victim: info.victim ? info.victim.steamID : null,
-                victimName: info.victim ? info.victim.name : null,
-                victimTeamID: info.victim ? info.victim.teamID : null,
-                victimSquadID: info.victim ? info.victim.squadID : null,
-                attacker: info.attacker ? info.attacker.steamID : null,
-                attackerName: info.attacker ? info.attacker.name : null,
-                attackerTeamID: info.attacker ? info.attacker.teamID : null,
-                attackerSquadID: info.attacker ? info.attacker.squadID : null,
-                damage: info.damage,
-                weapon: info.weapon,
-                teamkill: info.teamkill,
-                reviver: info.reviver ? info.reviver.steamID : null,
-                reviverName: info.reviver ? info.reviver.name : null,
-                reviverTeamID: info.reviver ? info.reviver.teamID : null,
-                reviverSquadID: info.reviver ? info.reviver.squadID : null
-            });
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    async onPlayerConnected(info) {
-        try {
+        if (info.attacker)
             await this.models.Player.upsert(
                 {
-                    eosID: info.eosID,
-                    steamID: info.player.steamID,
-                    lastName: info.player.name,
-                    lastIP: info.ip
+                    eosID: info.attacker.eosID,
+                    steamID: info.attacker.steamID,
+                    lastName: info.attacker.name
                 },
                 {
                     conflictFields: ['steamID']
                 }
             );
-        } catch (error) {
-            console.log(error);
-        }
+        if (info.victim)
+            await this.models.Player.upsert(
+                {
+                    eosID: info.victim.eosID,
+                    steamID: info.victim.steamID,
+                    lastName: info.victim.name
+                },
+                {
+                    conflictFields: ['steamID']
+                }
+            );
+
+        await this.models.Wound.create({
+            server: this.options.overrideServerID || this.server.id,
+            match: this.match ? this.match.id : null,
+            time: info.time,
+            victim: info.victim ? info.victim.steamID : null,
+            victimName: info.victim ? info.victim.name : null,
+            victimTeamID: info.victim ? info.victim.teamID : null,
+            victimSquadID: info.victim ? info.victim.squadID : null,
+            attacker: info.attacker ? info.attacker.steamID : null,
+            attackerName: info.attacker ? info.attacker.name : null,
+            attackerTeamID: info.attacker ? info.attacker.teamID : null,
+            attackerSquadID: info.attacker ? info.attacker.squadID : null,
+            damage: info.damage,
+            weapon: info.weapon,
+            teamkill: info.teamkill
+        });
+    }
+
+    async onPlayerDied(info) {
+        if (info.attacker)
+            await this.models.Player.upsert(
+                {
+                    eosID: info.attacker.eosID,
+                    steamID: info.attacker.steamID,
+                    lastName: info.attacker.name
+                },
+                {
+                    conflictFields: ['steamID']
+                }
+            );
+        if (info.victim)
+            await this.models.Player.upsert(
+                {
+                    eosID: info.victim.eosID,
+                    steamID: info.victim.steamID,
+                    lastName: info.victim.name
+                },
+                {
+                    conflictFields: ['steamID']
+                }
+            );
+
+        await this.models.Death.create({
+            server: this.options.overrideServerID || this.server.id,
+            match: this.match ? this.match.id : null,
+            time: info.time,
+            woundTime: info.woundTime,
+            victim: info.victim ? info.victim.steamID : null,
+            victimName: info.victim ? info.victim.name : null,
+            victimTeamID: info.victim ? info.victim.teamID : null,
+            victimSquadID: info.victim ? info.victim.squadID : null,
+            attacker: info.attacker ? info.attacker.steamID : null,
+            attackerName: info.attacker ? info.attacker.name : null,
+            attackerTeamID: info.attacker ? info.attacker.teamID : null,
+            attackerSquadID: info.attacker ? info.attacker.squadID : null,
+            damage: info.damage,
+            weapon: info.weapon,
+            teamkill: info.teamkill
+        });
+    }
+
+    async onPlayerRevived(info) {
+        if (info.attacker)
+            await this.models.Player.upsert(
+                {
+                    eosID: info.attacker.eosID,
+                    steamID: info.attacker.steamID,
+                    lastName: info.attacker.name
+                },
+                {
+                    conflictFields: ['steamID']
+                }
+            );
+        if (info.victim)
+            await this.models.Player.upsert(
+                {
+                    eosID: info.victim.eosID,
+                    steamID: info.victim.steamID,
+                    lastName: info.victim.name
+                },
+                {
+                    conflictFields: ['steamID']
+                }
+            );
+        if (info.reviver)
+            await this.models.Player.upsert(
+                {
+                    eosID: info.reviver.eosID,
+                    steamID: info.reviver.steamID,
+                    lastName: info.reviver.name
+                },
+                {
+                    conflictFields: ['steamID']
+                }
+            );
+
+        await this.models.Revive.create({
+            server: this.options.overrideServerID || this.server.id,
+            match: this.match ? this.match.id : null,
+            time: info.time,
+            woundTime: info.woundTime,
+            victim: info.victim ? info.victim.steamID : null,
+            victimName: info.victim ? info.victim.name : null,
+            victimTeamID: info.victim ? info.victim.teamID : null,
+            victimSquadID: info.victim ? info.victim.squadID : null,
+            attacker: info.attacker ? info.attacker.steamID : null,
+            attackerName: info.attacker ? info.attacker.name : null,
+            attackerTeamID: info.attacker ? info.attacker.teamID : null,
+            attackerSquadID: info.attacker ? info.attacker.squadID : null,
+            damage: info.damage,
+            weapon: info.weapon,
+            teamkill: info.teamkill,
+            reviver: info.reviver ? info.reviver.steamID : null,
+            reviverName: info.reviver ? info.reviver.name : null,
+            reviverTeamID: info.reviver ? info.reviver.teamID : null,
+            reviverSquadID: info.reviver ? info.reviver.squadID : null
+        });
+    }
+
+    async onPlayerConnected(info) {
+        await this.models.Player.upsert(
+            {
+                eosID: info.eosID,
+                steamID: info.player.steamID,
+                lastName: info.player.name,
+                lastIP: info.ip
+            },
+            {
+                conflictFields: ['steamID']
+            }
+        );
     }
 
     async migrateSteamUsersIntoPlayers() {
