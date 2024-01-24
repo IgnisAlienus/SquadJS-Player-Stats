@@ -39,6 +39,7 @@
 - You are welcome to use the provided `a-complete-db-log.js` file contents for your `db-log.js` plugin. Just note, that I may not have this file updated as fast if the Main SquadJS updates their version of `db-log.js`.
 - Therefore, I have provided the individual bits you need to paste in the `add-to-db-log.js` file.
 - You may need to manually update the Database Tables to make sure they get the new Table and Columns:
+    - Your Database may/may not be CaSe Sensitive about Table/Columm names.
 ```sql
 ALTER TABLE dblog_players
 ADD COLUMN discordID VARCHAR(255);
