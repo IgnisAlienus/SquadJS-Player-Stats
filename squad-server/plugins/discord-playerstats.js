@@ -413,7 +413,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
     async checkVersion() {
         const owner = 'IgnisAlienus';
         const repo = 'SquadJS-Player-Stats';
-        const currentVersion = 'v3.0.0';
+        const currentVersion = 'v3.0.1';
 
         try {
             const latestVersion = await getLatestVersion(owner, repo);
@@ -580,7 +580,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             );
             await this.server.rcon.warn(
                 steamID,
-                `Your Discord Account has been linked to your In Game Account.\nYou can now use !mystats in-game to view your stats.`
+                `Your Discord Account has been linked to your In Game Account.\nYou can now use !mystats in Discord to view your stats.`
             );
             // Delete Link Code from DB
             await this.models.LinkCode.destroy({
@@ -601,10 +601,9 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         if (message.author.bot) return;
         const manualCmdRegex = new RegExp("^!" + this.options.dailyStatsManualPostCmd + "$");
 
-        // Format is !this.options.inDiscordStatsCommand <steamID>
-        const mystatsCmdRegex = new RegExp("^!" + this.options.inDiscordStatsCommand);
+        const mystatsCmdRegex = new RegExp("^!" + this.options.inDiscordStatsCommand + "(?:\\s+(\\d{17}))?$");
 
-        const linkCmdRegex = new RegExp("^!" + this.options.linkDiscordAccountCommand);
+        const linkCmdRegex = new RegExp("^!" + this.options.linkDiscordAccountCommand + "$");
 
         if (message.content.match(manualCmdRegex) && this.options.enableDailyStats === true) {
             if (message.member._roles.includes(this.options.dailymanualCmdRole)) {
@@ -617,18 +616,22 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         }
 
         if (message.content.match(mystatsCmdRegex) && this.options.enableInDiscordStatsCommand === true) {
-            // Find Player in DB
+            const [, steamID] = message.content.match(mystatsCmdRegex) || [];
+            if (steamID) {
+                await this.postUserStats(steamID);
+                return;
+            }
             const playerResult = await this.models.Player.findOne({
                 where: {
                     discordID: message.author.id
                 },
                 attributes: ['steamID']
             });
-            const steamID = playerResult ? playerResult.steamID : null;
-            if (!steamID) {
-                return message.reply(`Your Discord Account is not linked to an In Game Account.\nUse !${this.options.linkDiscordAccountCommand} in Discord begin linking your account.`);
+            const playerSteamID = playerResult ? playerResult.steamID : null;
+            if (!playerSteamID) {
+                return message.reply(`Your Discord Account is not linked to an In Game Account.\nUse \`!${this.options.linkDiscordAccountCommand}\` in Discord to begin linking your account.\nOr use \`!mystats "Your SteamID"\``);
             }
-            await this.postUserStats(steamID);
+            await this.postUserStats(playerSteamID);
             return;
         } else if (message.content.match(mystatsCmdRegex) && this.options.enableInDiscordStatsCommand === false) {
             return message.reply('In Discord Stats are not enabled.');
@@ -702,7 +705,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         // Calculate Favorite Weapon
         const weaponResult = await this.models.Wound.findOne({
             where: {
-                attacker: steamID,
+                attacker,
                 time: { [Op.gte]: daysAgo },
                 teamkill: false
             },
