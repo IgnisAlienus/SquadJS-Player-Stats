@@ -580,7 +580,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             );
             await this.server.rcon.warn(
                 steamID,
-                `Your Discord Account has been linked to your In Game Account.\nYou can now use !mystats in-game to view your stats.`
+                `Your Discord Account has been linked to your In Game Account.\nYou can now use !mystats in Discord to view your stats.`
             );
             // Delete Link Code from DB
             await this.models.LinkCode.destroy({
@@ -603,7 +603,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
 
         const mystatsCmdRegex = new RegExp("^!" + this.options.inDiscordStatsCommand + "(?:\\s+(\\d{17}))?$");
 
-        const linkCmdRegex = new RegExp("^!" + this.options.linkDiscordAccountCommand);
+        const linkCmdRegex = new RegExp("^!" + this.options.linkDiscordAccountCommand + "$");
 
         if (message.content.match(manualCmdRegex) && this.options.enableDailyStats === true) {
             if (message.member._roles.includes(this.options.dailymanualCmdRole)) {
@@ -705,7 +705,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         // Calculate Favorite Weapon
         const weaponResult = await this.models.Wound.findOne({
             where: {
-                attacker: steamID,
+                attacker,
                 time: { [Op.gte]: daysAgo },
                 teamkill: false
             },
