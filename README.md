@@ -11,6 +11,7 @@
 - In Discord, players use `!link` to get a linking code that is used in game. (or your configured command - don't put an `!` in the config.json).
     - In-game, players use `!link [code]` to link thier in-game to their Discord. (or your configured command - don't put an `!` in the config.json).
 - In Discord, once linked, players can use `!mystats` to view thier stats in Discord. (or your configured command - don't put an `!` in the config.json).
+    - Players may also use `!mystats [SteamID64]` if they haven't "linked" yet. (or your configured command - don't put an `!` in the config.json).
 
 ## Requirements
 - DBLog Plugin needs to be ENABLED
