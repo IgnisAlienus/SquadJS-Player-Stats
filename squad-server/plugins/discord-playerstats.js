@@ -53,6 +53,11 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 description: 'Enable In Game Stats Command',
                 default: true
             },
+            ingameRequireReserve: {
+                required: false,
+                description: 'Require Reserve to Use in Game command',
+                default: true
+            },
             inGameStatsCommand: {
                 required: false,
                 description: 'Command Players use in-game Chat to see their stats.',
@@ -92,11 +97,6 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 required: false,
                 description: 'Command Cooldown time in minutes. Prevents Users from Spamming the command.',
                 default: 15
-            },
-            ingameRequireReserve: {
-                required: false,
-                description: 'Require Reserve to Use in Game command',
-                default: true
             },
             enableDailyStats: {
                 required: false,

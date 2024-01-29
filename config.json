@@ -5,16 +5,20 @@
     "channelID": "1076944412707397672",
     "database": "mysql",
     "daysBackToQuery": 30,
+
     "enableInGameStatsCommand": true,
+    "ingameRequireReserve": true,
     "inGameStatsCommand": "mystats",
+
     "enableInDiscordStatsCommand": true,
     "linkDiscordAccountCommand": "link",
     "linkDiscordEmbedColor": 16759808,
     "linkInGameAccountCommand": "link",
     "inDiscordStatsCommand": "mystats",
     "inDiscordStatsEmbedColor": 16759808,
+
     "statCooldown": 15,
-    "ingameRequireReserve": true,
+    
     "enableDailyStats": true,
     "dailyStatsTime": "15:00",
     "dailyStatsManualPostCmd": "stats",
