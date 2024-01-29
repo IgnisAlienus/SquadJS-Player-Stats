@@ -606,7 +606,8 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         const linkCmdRegex = new RegExp("^!" + this.options.linkDiscordAccountCommand + "$");
 
         if (message.content.match(manualCmdRegex) && this.options.enableDailyStats === true) {
-            if (message.member._roles.includes(this.options.dailymanualCmdRole)) {
+            // Check if User has Role to use this command
+            if (!message.member._roles.includes(this.options.dailymanualCmdRole)) {
                 return message.reply('You do not have permission to use this command.');
             }
             await this.postDailyStats();
