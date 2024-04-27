@@ -12,7 +12,7 @@
     "linkDiscordEmbedColor": 16759808,
     "linkInGameAccountCommand": "link",
     "inDiscordStatsCommand": "mystats",
-    "inDiscordStatsEmbedColor": 16759808,
+    "inDiscordStatsEmbedColor": 3447003,
     "statCooldown": 15,
     "ingameRequireReserve": true,
     "enableDailyStats": true,
