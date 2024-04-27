@@ -17,7 +17,7 @@
     "ingameRequireReserve": true,
     "enableDailyStats": true,
     "dailyStatsTime": "15:00",
-    "dailyStatsManualPostCmd": "stats",
+    "dailyStatsManualPostCmd": "dailystats",
     "dailyStatsEmbedColor": 16759808,
     "dailymanualCmdRole": 599226845589929984
   }
