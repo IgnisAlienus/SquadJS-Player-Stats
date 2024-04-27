@@ -1002,14 +1002,19 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         const topNemesisCount = topNemesisResult ? topNemesisResult.get('Count') : null;
 
         await this.sendDiscordMessage({
-            embed: {
-                title: `Squad Server Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
+             embed: {
+                title: `Squad Player Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
                 color: this.options.inDiscordStatsEmbedColor,
                 fields: [
-                    {
+                     {
+                        name: '-------------------------------------------------------------------------',
+                        value: "   ",
+                        inline: false
+                    },   
+					{
                         name: 'Found in Game Name',
                         value: lastName,
-                        inline: false
+                        inline: true
                     },
                     {
                         name: 'SteamID',
@@ -1017,13 +1022,18 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                         inline: true
                     },
                     {
-                        name: 'Total Kills',
-                        value: killsCount.toString(),
-                        inline: true
+                        name: '   ',
+                        value:  "   "  ,
+                        inline: false
+                    },
+					{
+                        name: '----------------------------  Players Stats  ----------------------------',
+                        value: "   ",
+                        inline: false
                     },
                     {
-                        name: 'Total Wounds',
-                        value: woundsCount.toString(),
+                        name: 'Total Kills',
+                        value: killsCount.toString(),
                         inline: true
                     },
                     {
@@ -1036,10 +1046,20 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                         value: kdRatio,
                         inline: true
                     },
-                    {
-                        name: 'Times Teamkilled',
-                        value: teamkilledCount.toString(),
-                        inline: true
+					{
+                        name: 'Total Wounds',
+                        value: woundsCount.toString(),
+                        inline: false
+                    },
+					{
+                        name: '-------------------------------------------------------------------------',
+                        value: "   ",
+                        inline: false
+                    },   
+					{
+                        name: '   ',
+                        value:  "   "  ,
+                        inline: false
                     },
                     {
                         name: 'Total Revives',
@@ -1047,6 +1067,16 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                         inline: true
                     },
                     {
+                        name: 'Times Teamkilled',
+                        value: teamkilledCount.toString(),
+                        inline: true
+                    },
+					{
+                        name: '-------------------------------------------------------------------------',
+                        value: "   ",
+                        inline: false
+                    }, 
+					{
                         name: 'Favorite Weapon',
                         value: modifyString(weapon),
                         inline: true
@@ -1054,13 +1084,13 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                     {
                         name: 'Top Victim',
                         value: `\`${lastName}\` has Killed \`${topVictim}\` \`${topVictimCount}\` Times!`,
-                        inline: true
+                        inline: false
                     },
                     {
                         name: 'Top Nemesis',
                         value: `\`${topNemesis}\` has Killed \`${lastName}\` \`${topNemesisCount}\` Times!`,
-                        inline: true
-                    },
+                        inline: false
+                    }
                 ],
                 timestamp: new Date().toISOString()
             }
