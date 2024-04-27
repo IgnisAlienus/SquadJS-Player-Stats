@@ -111,7 +111,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
             dailyStatsManualPostCmd: {
                 required: false,
                 description: 'Command to manually send the Daily Stats in Discord.',
-                default: "stats"
+                default: "dailystats"
             },
             dailyStatsEmbedColor: {
                 required: false,
