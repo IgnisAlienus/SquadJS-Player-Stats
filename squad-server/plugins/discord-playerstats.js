@@ -795,6 +795,61 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                 title: `Squad Server Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
                 color: this.options.dailyStatsEmbedColor,
                 fields: [
+                                        {
+                        name: '   ',
+                        value: "   ",
+                        inline: false
+                    },
+                    {
+                        name: '--------------------------  SERVER STATS  --------------------------',
+                        value: "   ",
+                        inline: false
+                    },
+                    {
+                        name: '   ',
+                        value: "   ",
+                        inline: false
+                    },
+                    {
+                        name: 'Server Total Kills',
+                        value: serverKillsCount,
+                        inline: false
+                    },
+                    {
+                        name: 'Server Total Wounds',
+                        value: serverWoundsCount,
+                        inline: true
+                    },
+                    {
+                        name: 'Server Total Deaths',
+                        value: serverDeathsCount,
+                        inline: true
+                    },
+                    {
+                        name: 'Server Total Revives',
+                        value: serverRevivesCount,
+                        inline: true
+                    },
+                    {
+                        name: 'Server Favorite Weapon',
+                        value: modifyString(serverWeapon),
+                        inline: true
+                    },
+                    {
+                        name: '   ',
+                        value: "   ",
+                        inline: false
+                    },
+                    {
+                        name: '----------------------------  TOP Player  ----------------------------',
+                        value: "   ",
+                        inline: false
+                    },
+                    {
+                        name: '   ',
+                        value: "   ",
+                        inline: false
+                    },
                     {
                         name: 'Top Player',
                         value: attackerName,
@@ -838,31 +893,6 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
                     {
                         name: 'Favorite Weapon',
                         value: modifyString(weapon),
-                        inline: true
-                    },
-                    {
-                        name: 'Server Total Kills',
-                        value: serverKillsCount,
-                        inline: false
-                    },
-                    {
-                        name: 'Server Total Wounds',
-                        value: serverWoundsCount,
-                        inline: true
-                    },
-                    {
-                        name: 'Server Total Deaths',
-                        value: serverDeathsCount,
-                        inline: true
-                    },
-                    {
-                        name: 'Server Total Revives',
-                        value: serverRevivesCount,
-                        inline: true
-                    },
-                    {
-                        name: 'Server Favorite Weapon',
-                        value: modifyString(serverWeapon),
                         inline: true
                     }
                 ],
