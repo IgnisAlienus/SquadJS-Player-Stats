@@ -651,6 +651,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         message.content.match(mystatsCmdRegex) &&
         this.options.enableInDiscordStatsCommand === true
       ) {
+        this.verbose(1, 'In Discord Stats Command Detected.');
         const [, steamID] = message.content.match(mystatsCmdRegex) || [];
         if (steamID) {
           await this.postUserStats(steamID);
@@ -681,6 +682,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         message.content.match(linkCmdRegex) &&
         this.options.enableInDiscordStatsCommand === true
       ) {
+        this.verbose(1, 'Link Discord Account Command Detected.');
         // Generate a random 6-digit code
         const linkCode = Math.floor(100000 + Math.random() * 900000);
         // Add Link Code to Database
