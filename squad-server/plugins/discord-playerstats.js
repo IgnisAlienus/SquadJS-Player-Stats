@@ -960,6 +960,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
   }
 
   async postUserStats(steamID) {
+    this.verbose(1, 'Posting User Stats for SteamID:', steamID);
     try {
       const daysAgo = moment()
         .subtract(this.options.daysBackToQuery, 'days')
