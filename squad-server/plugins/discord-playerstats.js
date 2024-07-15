@@ -615,91 +615,97 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
   }
 
   async onMessage(message) {
-    if (message.author.bot) return;
-    const manualCmdRegex = new RegExp(
-      '^!' + this.options.dailyStatsManualPostCmd + '$'
-    );
-
-    const mystatsCmdRegex = new RegExp(
-      '^!' + this.options.inDiscordStatsCommand + '(?:\\s+(\\d{17}))?$'
-    );
-
-    const linkCmdRegex = new RegExp(
-      '^!' + this.options.linkDiscordAccountCommand + '$'
-    );
-
-    if (
-      message.content.match(manualCmdRegex) &&
-      this.options.enableDailyStats === true
-    ) {
-      if (message.member._roles.includes(this.options.dailymanualCmdRole)) {
-        return message.reply('You do not have permission to use this command.');
-      }
-      await this.postDailyStats();
-      return;
-    } else if (
-      message.content.match(manualCmdRegex) &&
-      this.options.enableDailyStats === false
-    ) {
-      return message.reply('Daily Stats are not enabled.');
-    }
-
-    if (
-      message.content.match(mystatsCmdRegex) &&
-      this.options.enableInDiscordStatsCommand === true
-    ) {
-      const [, steamID] = message.content.match(mystatsCmdRegex) || [];
-      if (steamID) {
-        await this.postUserStats(steamID);
-        return;
-      }
-      const playerResult = await this.models.Player.findOne({
-        where: {
-          discordID: message.author.id,
-        },
-        attributes: ['steamID'],
-      });
-      const playerSteamID = playerResult ? playerResult.steamID : null;
-      if (!playerSteamID) {
-        return message.reply(
-          `Your Discord Account is not linked to an In Game Account.\nUse \`!${this.options.linkDiscordAccountCommand}\` in Discord to begin linking your account.\nOr use \`!mystats "Your SteamID"\``
-        );
-      }
-      await this.postUserStats(playerSteamID);
-      return;
-    } else if (
-      message.content.match(mystatsCmdRegex) &&
-      this.options.enableInDiscordStatsCommand === false
-    ) {
-      return message.reply('In Discord Stats are not enabled.');
-    }
-
-    if (
-      message.content.match(linkCmdRegex) &&
-      this.options.enableInDiscordStatsCommand === true
-    ) {
-      // Generate a random 6-digit code
-      const linkCode = Math.floor(100000 + Math.random() * 900000);
-      // Add Link Code to Database
-      await this.models.LinkCode.create({
-        linkCode: linkCode,
-        discordID: message.author.id,
-      });
-      // Tell User to Make sure they can receive DMs from the Bot
-      await message.reply(
-        `Please check your DMs for your linking code.\nMake sure you can receive DMs from this Bot.`
+    try {
+      if (message.author.bot) return;
+      const manualCmdRegex = new RegExp(
+        '^!' + this.options.dailyStatsManualPostCmd + '$'
       );
-      // Send Message to Discord User's DM
-      await message.author.send({
-        embed: {
-          title: `Your linking code is: \`${linkCode}\``,
-          description: `Please use \`!${this.options.linkInGameAccountCommand} ${linkCode}\` in-game to link your account.`,
-          color: this.options.linkDiscordEmbedColor,
-          timestamp: new Date().toISOString(),
-        },
-      });
+
+      const mystatsCmdRegex = new RegExp(
+        '^!' + this.options.inDiscordStatsCommand + '(?:\\s+(\\d{17}))?$'
+      );
+
+      const linkCmdRegex = new RegExp(
+        '^!' + this.options.linkDiscordAccountCommand + '$'
+      );
+
+      if (
+        message.content.match(manualCmdRegex) &&
+        this.options.enableDailyStats === true
+      ) {
+        if (message.member._roles.includes(this.options.dailymanualCmdRole)) {
+          return message.reply(
+            'You do not have permission to use this command.'
+          );
+        }
+        await this.postDailyStats();
+        return;
+      } else if (
+        message.content.match(manualCmdRegex) &&
+        this.options.enableDailyStats === false
+      ) {
+        return message.reply('Daily Stats are not enabled.');
+      }
+
+      if (
+        message.content.match(mystatsCmdRegex) &&
+        this.options.enableInDiscordStatsCommand === true
+      ) {
+        const [, steamID] = message.content.match(mystatsCmdRegex) || [];
+        if (steamID) {
+          await this.postUserStats(steamID);
+          return;
+        }
+        const playerResult = await this.models.Player.findOne({
+          where: {
+            discordID: message.author.id,
+          },
+          attributes: ['steamID'],
+        });
+        const playerSteamID = playerResult ? playerResult.steamID : null;
+        if (!playerSteamID) {
+          return message.reply(
+            `Your Discord Account is not linked to an In Game Account.\nUse \`!${this.options.linkDiscordAccountCommand}\` in Discord to begin linking your account.\nOr use \`!mystats "Your SteamID"\``
+          );
+        }
+        await this.postUserStats(playerSteamID);
+        return;
+      } else if (
+        message.content.match(mystatsCmdRegex) &&
+        this.options.enableInDiscordStatsCommand === false
+      ) {
+        return message.reply('In Discord Stats are not enabled.');
+      }
+
+      if (
+        message.content.match(linkCmdRegex) &&
+        this.options.enableInDiscordStatsCommand === true
+      ) {
+        // Generate a random 6-digit code
+        const linkCode = Math.floor(100000 + Math.random() * 900000);
+        // Add Link Code to Database
+        await this.models.LinkCode.create({
+          linkCode: linkCode,
+          discordID: message.author.id,
+        });
+        // Tell User to Make sure they can receive DMs from the Bot
+        await message.reply(
+          `Please check your DMs for your linking code.\nMake sure you can receive DMs from this Bot.`
+        );
+        // Send Message to Discord User's DM
+        await message.author.send({
+          embed: {
+            title: `Your linking code is: \`${linkCode}\``,
+            description: `Please use \`!${this.options.linkInGameAccountCommand} ${linkCode}\` in-game to link your account.`,
+            color: this.options.linkDiscordEmbedColor,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+      return;
+    } catch (error) {
+      return this.verbose(1, 'Error in onMessage:', error);
     }
-    return;
   }
 
   async scheduleDailyStats() {
