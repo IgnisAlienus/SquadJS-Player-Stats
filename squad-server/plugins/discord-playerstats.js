@@ -962,14 +962,14 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
   }
 
   async postUserStats(steamID) {
-    this.verbose(1, 'Posting User Stats for SteamID:', steamID);
+    this.verbose(2, 'Posting User Stats for SteamID:', steamID);
     try {
       const daysAgo = moment()
         .subtract(this.options.daysBackToQuery, 'days')
         .toDate();
 
       // Get Player
-      this.verbose(1, 'Getting Player Info for SteamID:', steamID);
+      this.verbose(2, 'Getting Player Info for SteamID:', steamID);
       const playerResult = await this.models.Player.findOne({
         where: {
           steamID: steamID,
@@ -979,7 +979,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       const lastName = playerResult ? playerResult.lastName : null;
 
       // Calculate total kills for the player
-      this.verbose(1, 'Calculating Player Stats for SteamID:', steamID);
+      this.verbose(2, 'Calculating Player Stats for SteamID:', steamID);
       const killsCount = await this.models.Death.count({
         where: {
           attacker: steamID,
@@ -988,7 +988,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         },
       });
       // Calculate Favorite Weapon
-      this.verbose(1, 'Calculating Favorite Weapon for SteamID:', steamID);
+      this.verbose(2, 'Calculating Favorite Weapon for SteamID:', steamID);
       const weaponResult = await this.models.Wound.findOne({
         where: {
           attacker: steamID,
@@ -1002,7 +1002,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       });
       const weapon = weaponResult ? weaponResult.weapon : 'No Weapon Found';
       // Wounds
-      this.verbose(1, 'Calculating Wounds for SteamID:', steamID);
+      this.verbose(2, 'Calculating Wounds for SteamID:', steamID);
       const woundsCount = await this.models.Wound.count({
         where: {
           attacker: steamID,
@@ -1011,7 +1011,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         },
       });
       // Deaths
-      this.verbose(1, 'Calculating Deaths for SteamID:', steamID);
+      this.verbose(2, 'Calculating Deaths for SteamID:', steamID);
       const deathsCount = await this.models.Death.count({
         where: {
           victim: steamID,
@@ -1020,7 +1020,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         },
       });
       // Times Teamkilled
-      this.verbose(1, 'Calculating Teamkills for SteamID:', steamID);
+      this.verbose(2, 'Calculating Teamkills for SteamID:', steamID);
       const teamkilledCount = await this.models.Death.count({
         where: {
           victim: steamID,
@@ -1029,7 +1029,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         },
       });
       // Revives
-      this.verbose(1, 'Calculating Revives for SteamID:', steamID);
+      this.verbose(2, 'Calculating Revives for SteamID:', steamID);
       const revivesCount = await this.models.Revive.count({
         where: {
           reviver: steamID,
@@ -1038,12 +1038,12 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       });
 
       // Calculate K/D
-      this.verbose(1, 'Calculating K/D for SteamID:', steamID);
+      this.verbose(2, 'Calculating K/D for SteamID:', steamID);
       const kdRatio =
         deathsCount !== 0 ? (killsCount / deathsCount).toFixed(2) : 0;
 
       // Top Victim
-      this.verbose(1, 'Calculating Top Victim for SteamID:', steamID);
+      this.verbose(2, 'Calculating Top Victim for SteamID:', steamID);
       const topVictimResult = await this.models.Death.findOne({
         where: {
           attacker: steamID,
@@ -1065,7 +1065,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         : null;
 
       // Top Nemesis
-      this.verbose(1, 'Calculating Top Nemesis for SteamID:', steamID);
+      this.verbose(2, 'Calculating Top Nemesis for SteamID:', steamID);
       const topNemesisResult = await this.models.Death.findOne({
         where: {
           victim: steamID,
@@ -1088,7 +1088,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         ? topNemesisResult.get('Count')
         : null;
 
-      this.verbose(1, 'Sending User Stats Message for SteamID:', steamID);
+      this.verbose(2, 'Sending User Stats Message for SteamID:', steamID);
       await this.sendDiscordMessage({
         embed: {
           title: `Squad Player Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
@@ -1183,7 +1183,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           timestamp: new Date().toISOString(),
         },
       });
-      this.verbose(1, 'User Stats Message Sent for SteamID:', steamID);
+      this.verbose(2, 'User Stats Message Sent for SteamID:', steamID);
     } catch (error) {
       this.verbose(1, 'Error in postUserStats:', error);
       return;
