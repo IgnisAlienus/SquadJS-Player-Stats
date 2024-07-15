@@ -704,7 +704,8 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       }
       return;
     } catch (error) {
-      return this.verbose(1, 'Error in onMessage:', error);
+      this.verbose(1, 'Error in onMessage:', error);
+      return;
     }
   }
 
@@ -959,212 +960,219 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
   }
 
   async postUserStats(steamID) {
-    const daysAgo = moment()
-      .subtract(this.options.daysBackToQuery, 'days')
-      .toDate();
+    try {
+      const daysAgo = moment()
+        .subtract(this.options.daysBackToQuery, 'days')
+        .toDate();
 
-    // Get Player
-    const playerResult = await this.models.Player.findOne({
-      where: {
-        steamID: steamID,
-      },
-      attributes: ['lastName'],
-    });
-    const lastName = playerResult ? playerResult.lastName : null;
+      // Get Player
+      const playerResult = await this.models.Player.findOne({
+        where: {
+          steamID: steamID,
+        },
+        attributes: ['lastName'],
+      });
+      const lastName = playerResult ? playerResult.lastName : null;
 
-    // Calculate total kills for the player
-    const killsCount = await this.models.Death.count({
-      where: {
-        attacker: steamID,
-        time: { [Op.gte]: daysAgo },
-        teamkill: false,
-      },
-    });
-    // Calculate Favorite Weapon
-    const weaponResult = await this.models.Wound.findOne({
-      where: {
-        attacker: steamID,
-        time: { [Op.gte]: daysAgo },
-        teamkill: false,
-      },
-      attributes: ['weapon'],
-      group: ['weapon'],
-      order: [[Sequelize.literal('COUNT(weapon)'), 'DESC']],
-      limit: 1,
-    });
-    const weapon = weaponResult ? weaponResult.weapon : 'No Weapon Found';
-    // Wounds
-    const woundsCount = await this.models.Wound.count({
-      where: {
-        attacker: steamID,
-        time: { [Op.gte]: daysAgo },
-        teamkill: false,
-      },
-    });
-    // Deaths
-    const deathsCount = await this.models.Death.count({
-      where: {
-        victim: steamID,
-        time: { [Op.gte]: daysAgo },
-        teamkill: { [Op.ne]: null },
-      },
-    });
-    // Times Teamkilled
-    const teamkilledCount = await this.models.Death.count({
-      where: {
-        victim: steamID,
-        time: { [Op.gte]: daysAgo },
-        teamkill: true,
-      },
-    });
-    // Revives
-    const revivesCount = await this.models.Revive.count({
-      where: {
-        reviver: steamID,
-        time: { [Op.gte]: daysAgo },
-      },
-    });
+      // Calculate total kills for the player
+      const killsCount = await this.models.Death.count({
+        where: {
+          attacker: steamID,
+          time: { [Op.gte]: daysAgo },
+          teamkill: false,
+        },
+      });
+      // Calculate Favorite Weapon
+      const weaponResult = await this.models.Wound.findOne({
+        where: {
+          attacker: steamID,
+          time: { [Op.gte]: daysAgo },
+          teamkill: false,
+        },
+        attributes: ['weapon'],
+        group: ['weapon'],
+        order: [[Sequelize.literal('COUNT(weapon)'), 'DESC']],
+        limit: 1,
+      });
+      const weapon = weaponResult ? weaponResult.weapon : 'No Weapon Found';
+      // Wounds
+      const woundsCount = await this.models.Wound.count({
+        where: {
+          attacker: steamID,
+          time: { [Op.gte]: daysAgo },
+          teamkill: false,
+        },
+      });
+      // Deaths
+      const deathsCount = await this.models.Death.count({
+        where: {
+          victim: steamID,
+          time: { [Op.gte]: daysAgo },
+          teamkill: { [Op.ne]: null },
+        },
+      });
+      // Times Teamkilled
+      const teamkilledCount = await this.models.Death.count({
+        where: {
+          victim: steamID,
+          time: { [Op.gte]: daysAgo },
+          teamkill: true,
+        },
+      });
+      // Revives
+      const revivesCount = await this.models.Revive.count({
+        where: {
+          reviver: steamID,
+          time: { [Op.gte]: daysAgo },
+        },
+      });
 
-    // Calculate K/D
-    const kdRatio =
-      deathsCount !== 0 ? (killsCount / deathsCount).toFixed(2) : 0;
+      // Calculate K/D
+      const kdRatio =
+        deathsCount !== 0 ? (killsCount / deathsCount).toFixed(2) : 0;
 
-    // Top Victim
-    const topVictimResult = await this.models.Death.findOne({
-      where: {
-        attacker: steamID,
-        time: { [Op.gte]: daysAgo },
-        teamkill: false,
-        victim: { [Op.not]: steamID },
-      },
-      attributes: [
-        'victimName',
-        [Sequelize.fn('COUNT', Sequelize.literal('victim')), 'Count'],
-      ],
-      group: ['victimName'],
-      order: [[Sequelize.literal('Count'), 'DESC']],
-      limit: 1,
-    });
-    const topVictim = topVictimResult ? topVictimResult.victimName : null;
-    const topVictimCount = topVictimResult
-      ? topVictimResult.get('Count')
-      : null;
-
-    // Top Nemesis
-    const topNemesisResult = await this.models.Death.findOne({
-      where: {
-        victim: steamID,
-        time: { [Op.gte]: daysAgo },
-        teamkill: false,
-        attacker: { [Op.not]: steamID },
-      },
-      attributes: [
-        'attackerName',
-        [Sequelize.fn('COUNT', Sequelize.literal('attacker')), 'Count'],
-      ],
-      group: ['attackerName'],
-      order: [[Sequelize.literal('Count'), 'DESC']],
-      limit: 1,
-    });
-    const topNemesis = topNemesisResult ? topNemesisResult.attackerName : null;
-    const topNemesisCount = topNemesisResult
-      ? topNemesisResult.get('Count')
-      : null;
-
-    await this.sendDiscordMessage({
-      embed: {
-        title: `Squad Player Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
-        color: this.options.inDiscordStatsEmbedColor,
-        fields: [
-          {
-            name: '-------------------------------------------------------------------------',
-            value: '   ',
-            inline: false,
-          },
-          {
-            name: 'Found in Game Name',
-            value: lastName,
-            inline: true,
-          },
-          {
-            name: 'SteamID',
-            value: steamID,
-            inline: true,
-          },
-          {
-            name: '   ',
-            value: '   ',
-            inline: false,
-          },
-          {
-            name: '----------------------------  Players Stats  ----------------------------',
-            value: '   ',
-            inline: false,
-          },
-          {
-            name: 'Total Kills',
-            value: killsCount.toString(),
-            inline: true,
-          },
-          {
-            name: 'Total Deaths',
-            value: deathsCount.toString(),
-            inline: true,
-          },
-          {
-            name: 'K/D Ratio',
-            value: kdRatio,
-            inline: true,
-          },
-          {
-            name: 'Total Wounds',
-            value: woundsCount.toString(),
-            inline: false,
-          },
-          {
-            name: '-------------------------------------------------------------------------',
-            value: '   ',
-            inline: false,
-          },
-          {
-            name: '   ',
-            value: '   ',
-            inline: false,
-          },
-          {
-            name: 'Total Revives',
-            value: revivesCount.toString(),
-            inline: true,
-          },
-          {
-            name: 'Times Teamkilled',
-            value: teamkilledCount.toString(),
-            inline: true,
-          },
-          {
-            name: '-------------------------------------------------------------------------',
-            value: '   ',
-            inline: false,
-          },
-          {
-            name: 'Favorite Weapon',
-            value: modifyString(weapon),
-            inline: true,
-          },
-          {
-            name: 'Top Victim',
-            value: `\`${lastName}\` has Killed \`${topVictim}\` \`${topVictimCount}\` Times!`,
-            inline: false,
-          },
-          {
-            name: 'Top Nemesis',
-            value: `\`${topNemesis}\` has Killed \`${lastName}\` \`${topNemesisCount}\` Times!`,
-            inline: false,
-          },
+      // Top Victim
+      const topVictimResult = await this.models.Death.findOne({
+        where: {
+          attacker: steamID,
+          time: { [Op.gte]: daysAgo },
+          teamkill: false,
+          victim: { [Op.not]: steamID },
+        },
+        attributes: [
+          'victimName',
+          [Sequelize.fn('COUNT', Sequelize.literal('victim')), 'Count'],
         ],
-        timestamp: new Date().toISOString(),
-      },
-    });
+        group: ['victimName'],
+        order: [[Sequelize.literal('Count'), 'DESC']],
+        limit: 1,
+      });
+      const topVictim = topVictimResult ? topVictimResult.victimName : null;
+      const topVictimCount = topVictimResult
+        ? topVictimResult.get('Count')
+        : null;
+
+      // Top Nemesis
+      const topNemesisResult = await this.models.Death.findOne({
+        where: {
+          victim: steamID,
+          time: { [Op.gte]: daysAgo },
+          teamkill: false,
+          attacker: { [Op.not]: steamID },
+        },
+        attributes: [
+          'attackerName',
+          [Sequelize.fn('COUNT', Sequelize.literal('attacker')), 'Count'],
+        ],
+        group: ['attackerName'],
+        order: [[Sequelize.literal('Count'), 'DESC']],
+        limit: 1,
+      });
+      const topNemesis = topNemesisResult
+        ? topNemesisResult.attackerName
+        : null;
+      const topNemesisCount = topNemesisResult
+        ? topNemesisResult.get('Count')
+        : null;
+
+      await this.sendDiscordMessage({
+        embed: {
+          title: `Squad Player Stats for the Last ${this.options.daysBackToQuery.toString()} Days`,
+          color: this.options.inDiscordStatsEmbedColor,
+          fields: [
+            {
+              name: '-------------------------------------------------------------------------',
+              value: '   ',
+              inline: false,
+            },
+            {
+              name: 'Found in Game Name',
+              value: lastName,
+              inline: true,
+            },
+            {
+              name: 'SteamID',
+              value: steamID,
+              inline: true,
+            },
+            {
+              name: '   ',
+              value: '   ',
+              inline: false,
+            },
+            {
+              name: '----------------------------  Players Stats  ----------------------------',
+              value: '   ',
+              inline: false,
+            },
+            {
+              name: 'Total Kills',
+              value: killsCount.toString(),
+              inline: true,
+            },
+            {
+              name: 'Total Deaths',
+              value: deathsCount.toString(),
+              inline: true,
+            },
+            {
+              name: 'K/D Ratio',
+              value: kdRatio,
+              inline: true,
+            },
+            {
+              name: 'Total Wounds',
+              value: woundsCount.toString(),
+              inline: false,
+            },
+            {
+              name: '-------------------------------------------------------------------------',
+              value: '   ',
+              inline: false,
+            },
+            {
+              name: '   ',
+              value: '   ',
+              inline: false,
+            },
+            {
+              name: 'Total Revives',
+              value: revivesCount.toString(),
+              inline: true,
+            },
+            {
+              name: 'Times Teamkilled',
+              value: teamkilledCount.toString(),
+              inline: true,
+            },
+            {
+              name: '-------------------------------------------------------------------------',
+              value: '   ',
+              inline: false,
+            },
+            {
+              name: 'Favorite Weapon',
+              value: modifyString(weapon),
+              inline: true,
+            },
+            {
+              name: 'Top Victim',
+              value: `\`${lastName}\` has Killed \`${topVictim}\` \`${topVictimCount}\` Times!`,
+              inline: false,
+            },
+            {
+              name: 'Top Nemesis',
+              value: `\`${topNemesis}\` has Killed \`${lastName}\` \`${topNemesisCount}\` Times!`,
+              inline: false,
+            },
+          ],
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      this.verbose(1, 'Error in postUserStats:', error);
+      return;
+    }
   }
 }
 
