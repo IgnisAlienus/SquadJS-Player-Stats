@@ -986,7 +986,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       order: [[Sequelize.literal('COUNT(weapon)'), 'DESC']],
       limit: 1,
     });
-    const weapon = weaponResult ? weaponResult.weapon : null;
+    const weapon = weaponResult ? weaponResult.weapon : 'No Weapon Found';
     // Wounds
     const woundsCount = await this.models.Wound.count({
       where: {
