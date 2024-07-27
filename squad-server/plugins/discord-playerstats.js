@@ -9,6 +9,9 @@ const { DataTypes } = Sequelize;
 // Function written by Nath
 // Function removes BM_ from string content as well as replaces all "_" with " "
 function modifyString(string) {
+  if (!string) {
+    return 'N/A';
+  }
   if (string.startsWith('BP_')) {
     string = string.slice(3);
   }
@@ -698,7 +701,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         await message.author.send({
           embed: {
             title: `Your linking code is: \`${linkCode}\``,
-            description: `Please use \`!${this.options.linkInGameAccountCommand} ${linkCode}\` in-game to link your account.`,
+            description: `Please use \`!${this.options.linkInGameAccountCommand} ${linkCode}\` **IN GAME CHAT** to link your account.`,
             color: this.options.linkDiscordEmbedColor,
             timestamp: new Date().toISOString(),
           },
@@ -751,7 +754,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       limit: 1,
     });
 
-    const { attacker, attackerName } = result.dataValues;
+    const { attacker, attackerName } = result?.dataValues || { attacker: 'N/A', attackerName: 'N/A' };
 
     // Calculate total kills for the top player
     const killsCount = await this.models.Death.count({
@@ -760,7 +763,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         time: { [Op.gte]: daysAgo },
         teamkill: false,
       },
-    });
+    }) || 0;
     // Calculate Favorite Weapon
     const weaponResult = await this.models.Wound.findOne({
       where: {
@@ -773,7 +776,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       order: [[Sequelize.literal('COUNT(weapon)'), 'DESC']],
       limit: 1,
     });
-    const weapon = weaponResult ? weaponResult.weapon : null;
+    const weapon = weaponResult ? weaponResult.weapon : 'N/A';
     // Wounds
     const woundsCount = await this.models.Wound.count({
       where: {
@@ -781,7 +784,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         time: { [Op.gte]: daysAgo },
         teamkill: false,
       },
-    });
+    }) || 0;
     // Deaths
     const deathsCount = await this.models.Death.count({
       where: {
@@ -789,7 +792,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         time: { [Op.gte]: daysAgo },
         teamkill: { [Op.ne]: null },
       },
-    });
+    }) || 0;
     // Times Teamkilled
     const teamkilledCount = await this.models.Death.count({
       where: {
@@ -797,14 +800,14 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         time: { [Op.gte]: daysAgo },
         teamkill: true,
       },
-    });
+    }) || 0;
     // Revives
     const revivesCount = await this.models.Revive.count({
       where: {
         reviver: attacker,
         time: { [Op.gte]: daysAgo },
       },
-    });
+    }) || 0;
 
     // Calculate K/D
     const kdRatio =
@@ -816,7 +819,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         time: { [Op.gte]: daysAgo },
         teamkill: false,
       },
-    });
+    }) || 0;
     // Calculate Server Favorite Weapon
     const serverWeaponResult = await this.models.Wound.findOne({
       where: {
@@ -835,20 +838,20 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         time: { [Op.gte]: daysAgo },
         teamkill: false,
       },
-    });
+    }) || 0;
     // Server Deaths
     const serverDeathsCount = await this.models.Death.count({
       where: {
         time: { [Op.gte]: daysAgo },
         teamkill: { [Op.ne]: null },
       },
-    });
+    }) || 0;
     // Server Revives
     const serverRevivesCount = await this.models.Revive.count({
       where: {
         time: { [Op.gte]: daysAgo },
       },
-    });
+    }) || 0;
 
     await this.sendDiscordMessage({
       embed: {
@@ -872,22 +875,22 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           },
           {
             name: 'Server Total Kills',
-            value: serverKillsCount,
+            value: serverKillsCount.toString(),
             inline: false,
           },
           {
             name: 'Server Total Wounds',
-            value: serverWoundsCount,
+            value: serverWoundsCount.toString(),
             inline: true,
           },
           {
             name: 'Server Total Deaths',
-            value: serverDeathsCount,
+            value: serverDeathsCount.toString(),
             inline: true,
           },
           {
             name: 'Server Total Revives',
-            value: serverRevivesCount,
+            value: serverRevivesCount.toString(),
             inline: true,
           },
           {
@@ -937,7 +940,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           },
           {
             name: 'K/D Ratio',
-            value: kdRatio,
+            value: kdRatio.toString(),
             inline: true,
           },
           {
@@ -976,7 +979,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         },
         attributes: ['lastName'],
       });
-      const lastName = playerResult ? playerResult.lastName : null;
+      const lastName = playerResult ? playerResult.lastName : 'N/A';
 
       // Calculate total kills for the player
       this.verbose(2, 'Calculating Player Stats for SteamID:', steamID);
@@ -986,7 +989,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           time: { [Op.gte]: daysAgo },
           teamkill: false,
         },
-      });
+      }) || 0;
       // Calculate Favorite Weapon
       this.verbose(2, 'Calculating Favorite Weapon for SteamID:', steamID);
       const weaponResult = await this.models.Wound.findOne({
@@ -1000,7 +1003,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         order: [[Sequelize.literal('COUNT(weapon)'), 'DESC']],
         limit: 1,
       });
-      const weapon = weaponResult ? weaponResult.weapon : 'No Weapon Found';
+      const weapon = weaponResult ? weaponResult.weapon : 'N/A';
       // Wounds
       this.verbose(2, 'Calculating Wounds for SteamID:', steamID);
       const woundsCount = await this.models.Wound.count({
@@ -1009,7 +1012,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           time: { [Op.gte]: daysAgo },
           teamkill: false,
         },
-      });
+      }) || 0;
       // Deaths
       this.verbose(2, 'Calculating Deaths for SteamID:', steamID);
       const deathsCount = await this.models.Death.count({
@@ -1018,7 +1021,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           time: { [Op.gte]: daysAgo },
           teamkill: { [Op.ne]: null },
         },
-      });
+      }) || 0;
       // Times Teamkilled
       this.verbose(2, 'Calculating Teamkills for SteamID:', steamID);
       const teamkilledCount = await this.models.Death.count({
@@ -1027,7 +1030,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           time: { [Op.gte]: daysAgo },
           teamkill: true,
         },
-      });
+      }) || 0;
       // Revives
       this.verbose(2, 'Calculating Revives for SteamID:', steamID);
       const revivesCount = await this.models.Revive.count({
@@ -1035,7 +1038,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
           reviver: steamID,
           time: { [Op.gte]: daysAgo },
         },
-      });
+      }) || 0;
 
       // Calculate K/D
       this.verbose(2, 'Calculating K/D for SteamID:', steamID);
@@ -1059,10 +1062,10 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
         order: [[Sequelize.literal('Count'), 'DESC']],
         limit: 1,
       });
-      const topVictim = topVictimResult ? topVictimResult.victimName : null;
+      const topVictim = topVictimResult ? topVictimResult.victimName : 'N/A';
       const topVictimCount = topVictimResult
         ? topVictimResult.get('Count')
-        : null;
+        : 'N/A';
 
       // Top Nemesis
       this.verbose(2, 'Calculating Top Nemesis for SteamID:', steamID);
@@ -1083,10 +1086,10 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
       });
       const topNemesis = topNemesisResult
         ? topNemesisResult.attackerName
-        : null;
+        : 'N/A';
       const topNemesisCount = topNemesisResult
         ? topNemesisResult.get('Count')
-        : null;
+        : 'N/A';
 
       this.verbose(2, 'Sending User Stats Message for SteamID:', steamID);
       await this.sendDiscordMessage({
