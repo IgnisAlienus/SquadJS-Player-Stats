@@ -1,3 +1,4 @@
+//Plugin by PSG - Ignis
 import DiscordBasePlugin from './discord-base-plugin.js';
 import Sequelize from 'sequelize';
 import { Op } from 'sequelize';
