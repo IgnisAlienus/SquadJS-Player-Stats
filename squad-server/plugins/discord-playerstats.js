@@ -434,7 +434,7 @@ export default class DiscordPlayerStats extends DiscordBasePlugin {
   async checkVersion() {
     const owner = 'IgnisAlienus';
     const repo = 'SquadJS-Player-Stats';
-    const currentVersion = 'v3.0.1';
+    const currentVersion = 'v3.0.2';
 
     try {
       const latestVersion = await getLatestVersion(owner, repo);
